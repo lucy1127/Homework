@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<html>
+<head> 
+<title>JavaScript Homework</title>
+<style>
+	#content{
+		position: absolute;
+		text-align: center;
+		width: 100vw;
+	}
+
+</style>
+</head>
+<body>
+		<h2 style="text-align : center">Homework 3</h2>
+		<hr> 
+		<div id="content" style="background : pink;width: 100vw; height: 80vh; overflow : hidden">
+			<button id="button" type = "button" onclick = "changeBackground()"> Light OFF!</button>
+			<p id="hint" style="bottom: 1vh;position: absolute;text-align:center;width: 100vw;">The Light is On.</p>
+		</div> 
+		
+<script>
+	var isOpen = 1; // 1 is open, 0 is close;
+
+	function changeBackground(){
+		if(isOpen === 1){
+			document.getElementById('content').style.background = 'gray';
+			document.getElementById('button').innerHTML = 'Light ON!';
+			document.getElementById('hint').innerHTML = 'The Light is Off.';
+			isOpen = 0;
+		}
+		else if(isOpen === 0){
+			document.getElementById('content').style.background = 'pink';
+			document.getElementById('button').innerHTML = 'Light OFF!';
+			document.getElementById('hint').innerHTML = 'The Light is On.';
+			isOpen = 1;
+		}
+		
+		
+	}
+</script>		
+		
+</body>
+</html>

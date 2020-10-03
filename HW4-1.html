@@ -46,9 +46,12 @@ function init() {
  
  var controls =new THREE.OrbitControls(camera,renderer.domElement);
  
+ axes = new THREE.AxesHelper(10);
+ 
  scene = new THREE.Scene(); 
  var grid = new THREE.GridHelper (100, 10, 'red', 'white');
  scene. add (grid);
+ scene. add (axes);
 } 
 
 function animate() { 

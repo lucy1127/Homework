@@ -1,0 +1,64 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<style>
+<!--#heading{
+ position:absolute;
+ text-align:center;
+ width:100vw;
+}-->
+</style> 
+</head>
+<body> 
+ <!--<div id='heading'>
+ <h1 style ='color:pink'>My First 3JS</h1>
+ <button id='toggle'> Press </button>
+</div>-->
+
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<script> 
+
+javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+
+// my script
+$('#toggle').click(
+function(){
+ axes.material.visible =! axes.material.visible;
+});
+var renderer, camera, scene; 
+var axes;
+
+init(); 
+animate(); 
+
+function init() { 
+
+ renderer = new THREE.WebGLRenderer ({antialias: true}); 
+ renderer.setSize (window.innerWidth,window.innerHeight); 
+ renderer.setClearColor (0x888888); 
+ document.body.appendChild (renderer.domElement); 
+ 
+ camera = new THREE.PerspectiveCamera (100, window.innerWidth/window.innerHeight, 1, 100);
+ camera. position.z = 50;// (0,0,50) 
+ 
+ var controls =new THREE.OrbitControls(camera,renderer.domElement);
+ 
+ axes = new THREE.AxesHelper(30);
+ 
+ scene = new THREE.Scene(); 
+ var grid = new THREE.GridHelper (100, 10, 'red', 'white');
+ scene. add (grid);
+ scene. add (axes);
+} 
+
+function animate() { 
+ renderer.render (scene, camera); 
+ requestAnimationFrame( animate ); 
+}
+
+</script> 
+
+</body>

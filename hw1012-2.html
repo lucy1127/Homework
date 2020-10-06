@@ -49,7 +49,7 @@ function init() {
 
  columnGeom = new THREE.BoxGeometry(10, 30, 10); //兩側長方形 寬 高 長
  platformGeom = new THREE.BoxGeometry(20, 10, 10); // 底下長方形 高 寬 長
- material = new THREE.MeshLambertMaterial();
+ material = new THREE.MeshNormalMaterial();
 
  var mesh = new THREE.Mesh(columnGeom, material);
  var mesh2 = mesh.clone();

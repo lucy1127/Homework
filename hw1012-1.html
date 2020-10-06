@@ -44,22 +44,17 @@ function init() {
  scene. add (axes);
  
  //new 
- frame = new THREE.Object3D();  // an empty "frame" for group the meshes, centered at origin
- scene.add(frame);
+ var geometry = new THREE.BoxGeometry(20,10,30);
+ var material = new THREE.MeshNormalMaterial();
+ var box = new THREE.Mesh(geometry,material);
+ box.position.set(10,5,15);
 
- columnGeom = new THREE.BoxGeometry(10, 30, 10); //兩側長方形 寬 高 長
- platformGeom = new THREE.BoxGeometry(20, 10, 10); // 底下長方形 高 寬 長
- material = new THREE.MeshLambertMaterial();
-
- var mesh = new THREE.Mesh(columnGeom, material);
- var mesh2 = mesh.clone();
- mesh.position.set(5, 15, -5); //x,y,z 左邊
- mesh2.position.set(5 + 30 , 15, -5);  // 右邊
- var mesh1 = new THREE.Mesh(platformGeom, material);
- mesh1.position.set(20, 5, -5); // 底下長方形
- frame.add(mesh); 
- frame.add(mesh1);
- frame.add(mesh2);
+ var cgeometry = new THREE.CylinderGeometry(5,5,10,64);
+ var cylinder = new THREE.Mesh(cgeometry,material);
+ cylinder.position.set(10,15,5);
+ 
+ scene.add(cylinder);
+ scene.add(box);
  
 } 
 

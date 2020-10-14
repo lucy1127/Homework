@@ -14,10 +14,7 @@
 javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 // my script
-$('#toggle').click(
-function(){
- axes.material.visible =! axes.material.visible;
-});
+
 var renderer, camera, scene; 
 var axes;
 
@@ -31,7 +28,7 @@ function init() {
  renderer.setClearColor (0x888888); 
  document.body.appendChild (renderer.domElement); 
  
- camera = new THREE.PerspectiveCamera (100, window.innerWidth/window.innerHeight, 1, 100);
+ camera = new THREE.PerspectiveCamera (70, window.innerWidth/window.innerHeight, 1, 1000);
  camera. position.z = 50;// (0,0,50) 
  
  var controls =new THREE.OrbitControls(camera,renderer.domElement);
@@ -44,12 +41,12 @@ function init() {
  scene. add (axes);
  
  //new 
- frame = new THREE.Object3D();  // an empty "frame" for group the meshes, centered at origin
+ var frame = new THREE.Object3D();  
  scene.add(frame);
 
- columnGeom = new THREE.BoxGeometry(10, 30, 10); //兩側長方形 寬 高 長
- platformGeom = new THREE.BoxGeometry(20, 10, 10); // 底下長方形 高 寬 長
- material = new THREE.MeshNormalMaterial();
+ var columnGeom = new THREE.BoxGeometry(10, 30, 10); //兩側長方形 寬 高 長
+ var platformGeom = new THREE.BoxGeometry(20, 10, 10); // 底下長方形 高 寬 長
+ var material = new THREE.MeshNormalMaterial();
 
  var mesh = new THREE.Mesh(columnGeom, material);
  var mesh2 = mesh.clone();
@@ -57,11 +54,29 @@ function init() {
  mesh2.position.set(5 + 30 , 15, -5);  // 右邊
  var mesh1 = new THREE.Mesh(platformGeom, material);
  mesh1.position.set(20, 5, -5); // 底下長方形
- frame.add(mesh); 
- frame.add(mesh1);
- frame.add(mesh2);
+ frame.add(mesh,mesh1,mesh2); 
+ //frame.add(mesh1);
+ //frame.add(mesh2);
+ //buildModel();
  
 } 
+/*function buildModel(){
+	//new 
+ var frame = new THREE.Object3D();  
+ scene.add(frame);
+
+ var columnGeom = new THREE.BoxGeometry(10, 30, 10); //兩側長方形 寬 高 長
+ var platformGeom = new THREE.BoxGeometry(20, 10, 10); // 底下長方形 高 寬 長
+ var material = new THREE.MeshNormalMaterial();
+
+ var mesh = new THREE.Mesh(columnGeom, material);
+ var mesh2 = mesh.clone();
+ mesh.position.set(5, 15, -5); //x,y,z 左邊
+ mesh2.position.set(5 + 30 , 15, -5);  // 右邊
+ var mesh1 = new THREE.Mesh(platformGeom, material);
+ mesh1.position.set(20, 5, -5); // 底下長方形
+ frame.add(mesh,mesh1,mesh2); 
+}*/
 
 function animate() { 
  renderer.render (scene, camera); 

@@ -2,64 +2,56 @@
 <html> 
 <head> 
 <style>
+#heading{
+ position:absolute;
+ text-align:center;
+ width:100vw;
+}
 </style> 
 </head>
 <body> 
 <!--<script src="https://threejs.org/build/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script> -->
 
+<div id='heading'>
+ <h1 style ='color:pink'>My First 3JS</h1>
+ <button id='toggle'> Press </button>
+</div>
+
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
-<script src='threex.keyboardstate.js'></script>
-
-
 
 <!--<script> -->
 
 <script type ="module">
 javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
-
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
 
+$('#toggle').click(function(){
+ turn = ! turn;
+ 
+ if(turn)
+	$('#toggle').text ('stop');
+ else
+    $('#toggle').text ('turn');
+});
 
 // my script
 
 var renderer, camera, scene; 
-var axes,frame,controls;
+var axes,frame;
+var complete;
 
-
-// new
-
-var keyboard = new KeyboardState();
-var clock;
-
-var car;
-var pos = new THREE.Vector3();
-var speed, angle, vel;
-
-KeyboardState = function()
-{	
-	// bind keyEvents
-	document.addEventListener("keydown", KeyboardState.onKeyDown, false);
-	document.addEventListener("keyup",   KeyboardState.onKeyUp,   false);	
-}
-
-(function() {
-  Math.clamp = function(val,min,max){
-    return Math.min(Math.max(val,min),max);
-    
-  }})();
+var angle = 0;
+var turn = false;
 
 
 init(); 
 animate(); 
 
 function init() { 
-
- clock = new THREE.Clock();
- //scene = new THREE.Scene();
 
  renderer = new THREE.WebGLRenderer ({antialias: true}); 
  renderer.setSize (window.innerWidth,window.innerHeight); 
@@ -70,7 +62,7 @@ function init() {
  camera. position.z = 50;// (0,0,50) 
  
 
- controls = new OrbitControls (camera, renderer.domElement);
+ var controls = new OrbitControls (camera, renderer.domElement);
  
  axes = new THREE.AxesHelper(30);
  
@@ -79,37 +71,11 @@ function init() {
  scene. add (grid);
  scene. add (axes);
  
-  speed = 5.0;
-  angle = 0.0;
-  	
-  document.body.appendChild(renderer.domElement);
-  
-  car = BalanceCar();
-  scene.add(car)
- 
  //new 
- //BalanceCar();
- //Character();
+ BalanceCar();
+ Character();
+ 
 } 
-
-function update(dt) {
-
-    keyboard.update();
-	if ( keyboard.pressed("left") ) 
-		angle += 0.01;               
-	if ( keyboard.pressed("right") )
-		angle -= 0.01;               
-	if ( keyboard.pressed("up") )  
-		speed += 0.5;        
-	if ( keyboard.pressed("down") )  
-		speed -= 0.5;    
-
-	speed = Math.clamp (speed, 0.1, 20.0);// 速率 小到大
-	vel = new THREE.Vector3(speed,0,0); //速率轉速度
-	
-	vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle); // 延 Y 軸轉 Angle 角 vel 轉正 
-	pos.add (vel.clone().multiplyScalar(dt)); 	//積分 -> 位移增加量
-}
 
 function BalanceCar(){
 
@@ -130,8 +96,6 @@ function BalanceCar(){
 	cylinder2.position.set(5 + 20 , 5, 5);  // 右邊
 	
 	frame.add(box,cylinder,cylinder2); 
-	
-	return frame;
 	
 }
 function Character(){
@@ -167,17 +131,14 @@ function Character(){
 
 
 function animate() { 
-
+ 
+ if (turn) angle +=0.01;
+ frame.position.set (8*Math.cos(angle),0,8*Math.sin(angle));
+ frame.rotation.y = -angle;
+ 
  renderer.render (scene, camera); 
  requestAnimationFrame( animate ); 
- 
-  var dt = clock.getDelta();
-  update(dt);
 
-  // car update
-  car.position.copy(pos);
-  car.rotation.y = angle;
- 
 }
 
 

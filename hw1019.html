@@ -72,6 +72,8 @@ function init() {
  scene. add (axes);
  
  //new 
+ frame = new THREE.Object3D();
+ scene.add(frame);
  BalanceCar();
  Character();
  
@@ -79,8 +81,6 @@ function init() {
 
 function BalanceCar(){
 
-	frame = new THREE.Object3D();  
-	scene.add(frame);
 	
 	//box
 	var geometry = new THREE.BoxGeometry(30,5,10); //geometry 幾何
@@ -89,35 +89,35 @@ function BalanceCar(){
 	box.position.set(15,7.5,5);//x,y,z
 	
 	//circle
-	var cgeometry = new THREE.CylinderGeometry(5,5,10,64);
+	var cgeometry = new THREE.CylinderGeometry(2.5,2.5,10,64);
 	var cylinder = new THREE.Mesh(cgeometry,material);
 	var cylinder2 = cylinder.clone();
-	cylinder.position.set(5, 5, 5); //x,y,z 左邊
-	cylinder2.position.set(5 + 20 , 5, 5);  // 右邊
+	cylinder.position.set(5, 2.5, 5); //x,y,z 左邊
+	cylinder2.position.set(5 + 20 , 2.5, 5);  // 右邊
+	
+	cylinder.rotation.z = Math.PI / 2;
+	cylinder2.rotation.z = Math.PI / 2;
 	
 	frame.add(box,cylinder,cylinder2); 
 	
 }
 function Character(){
-
-	frame = new THREE.Object3D();  
-	scene.add(frame);
 	
 	//head
-	var hgeometry = new THREE.BoxGeometry(5,5,5); //geometry 幾何
+	var hgeometry = new THREE.BoxGeometry(10,10,5); //geometry 幾何
 	var material = new THREE.MeshNormalMaterial();
 	var head = new THREE.Mesh(hgeometry,material);
-	head.position.set(13.5,47.5,2.5);//x,y,z
+	head.position.set(13.5,45,2.5);//x,y,z
 	//body
 	var bgeometry = new THREE.BoxGeometry(10,20,5); 
 	var body = new THREE.Mesh(bgeometry,material);
-	body.position.set(13.5,35,2.5);
+	body.position.set(13.5,30,2.5);
 	//hand
-	var dgeometry = new THREE.BoxGeometry(5,10,5);
+	var dgeometry = new THREE.BoxGeometry(5,15,5);
 	var hand = new THREE.Mesh(dgeometry,material);
 	var hand2 = hand.clone();
-	hand.position.set(6.5,40,2.5);
-	hand2.position.set(20.5,40,2.5);
+	hand.position.set(6.5,32.5,2.5);
+	hand2.position.set(20.5,32.5,2.5);
 	//foot
 	var fgeometry = new THREE.BoxGeometry(5,20,5);
 	var foot = new THREE.Mesh(fgeometry,material);
@@ -125,7 +125,14 @@ function Character(){
 	foot.position.set(11,15,2.5);
 	foot2.position.set(16,15,2.5);
 	
-	frame.add(head,body,hand,hand2,foot,foot2);
+	var loader = new THREE.TextureLoader();
+	loader.crossOrigin = '';
+	
+	var tex = loader.load("./steve.png");
+	var texture = new THREE.Mesh(new THREE.PlaneGeometry(20,40), new THREE.MeshBasicMaterial({map : tex, transparent: true, side:THREE.DoubleSide}));
+	texture.position.set(13.5,30,5.1);
+	
+	frame.add(head,body,hand,hand2,foot,foot2,texture);
 }
 
 

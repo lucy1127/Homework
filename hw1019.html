@@ -14,7 +14,7 @@
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script> -->
 
 <div id='heading'>
- <h1 style ='color:pink'>My First 3JS</h1>
+ <h1 style ='color:pink'>My 3JS Game</h1>
  <button id='toggle'> Press </button>
 </div>
 
@@ -42,7 +42,6 @@ $('#toggle').click(function(){
 
 var renderer, camera, scene; 
 var axes,frame;
-var complete;
 
 var angle = 0;
 var turn = false;
@@ -125,14 +124,19 @@ function Character(){
 	foot.position.set(11,15,2.5);
 	foot2.position.set(16,15,2.5);
 	
+	//new
 	var loader = new THREE.TextureLoader();
 	loader.crossOrigin = '';
 	
 	var tex = loader.load("./steve.png");
 	var texture = new THREE.Mesh(new THREE.PlaneGeometry(20,40), new THREE.MeshBasicMaterial({map : tex, transparent: true, side:THREE.DoubleSide}));
-	texture.position.set(13.5,30,5.1);
+	texture.position.set(13.5,30,5.1); // 透明  : 開 
 	
-	frame.add(head,body,hand,hand2,foot,foot2,texture);
+	var tex2 = loader.load("./steveback.png");
+	var texture2 = new THREE.Mesh(new THREE.PlaneGeometry(20,40), new THREE.MeshBasicMaterial({map : tex2, transparent: true, side:THREE.DoubleSide}));
+	texture2.position.set(13.5,30,0.1); // 透明  : 開 
+	
+	frame.add(head,body,hand,hand2,foot,foot2,texture,texture2);
 }
 
 

@@ -134,7 +134,7 @@ function Character(){
 	
 	var tex2 = loader.load("./steveback.png");
 	var texture2 = new THREE.Mesh(new THREE.PlaneGeometry(20,40), new THREE.MeshBasicMaterial({map : tex2, transparent: true, side:THREE.DoubleSide}));
-	texture2.position.set(13.5,30,0.1); // 透明  : 開 
+	texture2.position.set(13.5,30,-0.1); // 透明  : 開 
 	
 	frame.add(head,body,hand,hand2,foot,foot2,texture,texture2);
 }

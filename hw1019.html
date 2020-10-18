@@ -137,13 +137,17 @@ function Character(){
 	frame.add(head,body,hand,hand2,foot,foot2,texture,texture2);
 }
 
-
+var state = 0;
+var i;
 
 function animate() { 
  
- if (turn) angle +=0.01;
- frame.position.set (8*Math.cos(angle),0,8*Math.sin(angle));
- frame.rotation.y = -angle;
+ if (turn) frame.position.x += 1;
+ /*for(i=0;;i++){
+	
+ }*/
+// frame.position.set (8*Math.cos(angle),0,8*Math.sin(angle));
+//frame.rotation.y = -angle;
  
  renderer.render (scene, camera); 
  requestAnimationFrame( animate ); 

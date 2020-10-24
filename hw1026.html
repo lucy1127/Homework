@@ -30,6 +30,7 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 
 var renderer, camera, scene; 
 var axes,frame,car;
+
 var point,now,next,front,isRunning;
 var v, ds, moveTo, stepNum, steps;
 var theta1, theta2, dq;
@@ -88,15 +89,15 @@ function init() {
  ];
   now = 0;
   next = 1;
-  front = point.length-1;
-  isRunning = true;
+  front = point.length - 1; //原點的前一個
+  isRunning = true; // 走
   
-  // for animate2()
+ 
   v = point[next].clone().sub(point[now]); // v = p2 - p1
-  ds = 0.31;
-  steps = Math.floor(v.length()/ds);
-  moveTo = point[now].clone();
-  stepNum = 0;
+  ds = 0.31; // 一步的距離
+  steps = Math.floor(v.length()/ds); // 總共步數
+  moveTo = point[now].clone(); // 移動car的
+  stepNum = 0; //計算步數
   
   
 } 
@@ -167,10 +168,10 @@ function truck(){
 function animate() { 
 
  if(isRunning){
-	running();
+	running(); //直走
  }
  else{
-	rotate();
+	rotate(); // 旋轉
  }
 
  renderer.render (scene, camera); 
@@ -179,36 +180,37 @@ function animate() {
 }
 
 function running(){
-	moveTo = moveTo.clone().add (v.clone().setLength(ds));
-	stepNum++;
-  if (stepNum > steps){
-	car.position.copy (point[next]);
-	isRunning = false;
-	next++;now++;front++;
-	next %= point.length;now %= point.length;front %= point.length;
+
+	moveTo = moveTo.clone().add (v.clone().setLength(ds)); // 移動 + 向量 V + 一步的距離
+	stepNum++; // 步數++
+	
+	if (stepNum > steps){ // 步數 > 總步數 代表已抵達
+		car.position.copy (point[next]);  //指到下一個點
+		isRunning = false; // 旋轉
+		next++;now++;front++; //移動到下一個點
+		next %= point.length;now %= point.length;front %= point.length; //超過點的數量 從起點開始
 	
 	  var p12 = point[now].clone().sub(point[front]);   // p12 = p2 - p1
-	  theta1 = Math.atan2 (p12.x, p12.z);
+	  theta1 = Math.atan2 (p12.x, p12.z); //角度
 	  car.position.copy (point[now]);
 	  car.rotation.y = theta1;
 
 	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
-	  theta2 = Math.atan2 (p23.x, p23.z);
+	  theta2 = Math.atan2 (p23.x, p23.z); //角度
 
-		dq = 0.01;
+	dq = 0.01; // 旋轉的移動的距離
 	  
-	 // steps = Math.floor ((theta2-theta1)/dq);
 	  steps = Math.floor ((theta2-theta1)/dq);
 	  
-	  if (theta1 > theta2) {
+	  if (theta1 > theta2) { // 1角度較大時
 		steps = -steps;
 		dq = -dq;
 	  }
+	  
 	   // debugger;
 	  stepNum = 0;
 	  moveTo = theta1;
 	  
-  
   }
 		
   else 
@@ -217,9 +219,9 @@ function running(){
 }
 function rotate(){
 
-	  if (stepNum > steps){
+	  if (stepNum > steps){ // 步數 > 總步數 代表已抵達
 		car.rotation.y = theta2;
-		isRunning = true;
+		isRunning = true; // 繼續走
 		
 		 v = point[next].clone().sub(point[now]); // v = p2 - p1
 		  ds = 0.31;

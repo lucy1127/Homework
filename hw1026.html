@@ -14,7 +14,6 @@
 
 <div id='heading'>
  <h1 style ='color:pink'>My Truck</h1>
- <button id='toggle'> Press </button>
 </div>
 
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -26,22 +25,15 @@ javascript:(function(){var script=document.createElement('script');script.onload
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
 
-$('#toggle').click(function(){
- turn = ! turn;
- 
- if(turn)
-	$('#toggle').text ('stop');
- else
-    $('#toggle').text ('turn');
-});
 
 // my script
 
 var renderer, camera, scene; 
-var axes,frame;
+var axes,frame,car;
+var point,now,next,front,isRunning;
+var v, ds, moveTo, stepNum, steps;
+var theta1, theta2, dq;
 
-//var angle = 0;
-var turn = false;
 
 
 init(); 
@@ -67,19 +59,51 @@ function init() {
  scene. add (grid);
  scene. add (axes);
  
- var light = new THREE.AmbientLight(0x404040); //打光
- scene.add(light);
+ var light = new THREE.SpotLight(0xffffff); //打光
+ var spotLightHelper = new THREE.SpotLightHelper(light);
+ light.position.set (-20,50,0);
+ scene.add(light,spotLightHelper);
+ 
+ var light2 = new THREE.AmbientLight(0x404040);
+ scene.add(light2);
  
  //new 
  frame = new THREE.Object3D();
- scene.add(frame);
+ frame.position.set(-5,0,-12.5);
+ car = new THREE.Object3D();
+ car.add(frame);
+ scene.add(car);
  truck();
  
+  point = [
+    new THREE.Vector3(0,0,0),
+	new THREE.Vector3(0,0,50),
+	new THREE.Vector3(20,0,50),
+	new THREE.Vector3(20,0,25),
+	new THREE.Vector3(40,0,25),
+	new THREE.Vector3(40,0,-25),
+	new THREE.Vector3(20,0,-25),
+	new THREE.Vector3(20,0,-50),
+	new THREE.Vector3(0,0,-50),
+ ];
+  now = 0;
+  next = 1;
+  front = point.length-1;
+  isRunning = true;
+  
+  // for animate2()
+  v = point[next].clone().sub(point[now]); // v = p2 - p1
+  ds = 0.31;
+  steps = Math.floor(v.length()/ds);
+  moveTo = point[now].clone();
+  stepNum = 0;
+  
+  
 } 
 function truck(){
 	
 	//ExtrudeGeometry
-	/*var length = 2.5, width = 2.5;
+	var length = 0.5, width = 0.5;
 	var shape = new THREE.Shape();
 	shape.moveTo( 0,0 );
 	shape.lineTo( 0, width );
@@ -89,36 +113,37 @@ function truck(){
 
 	var extrudeSettings = {
 		steps: 2, //側面三角形
-		depth: 5, //長方體長度
+		depth: 2.5, //長方體長度
 		bevelEnabled: true,
-		bevelThickness: 2,//頭的斜角長度
-		bevelSize: 5,//長方體寬度
+		bevelThickness: 1,//頭的斜角長度
+		bevelSize: 2.1,//長方體寬度
 		bevelOffset: 0, //頭的正面
 		bevelSegments: 1//斜角三角形
 	};
 	
 	var egeometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-	var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+	var material = new THREE.MeshPhongMaterial( { color: 0x00ffff } );
 	var extrude = new THREE.Mesh( egeometry, material ) ;
-	extrude.position.set(2.5,10,25);*/
+	extrude.position.set(4.3,9,23);
+	
 	//head1
 	var h1geometry = new THREE.BoxGeometry(5,5,5); //geometry 幾何 y-2.5
-	var material = new THREE.MeshBasicMaterial( { color: 0x2894FF } );
+	var material = new THREE.MeshPhongMaterial( { color: 0x2894FF } );
 	var head1 = new THREE.Mesh( h1geometry,material);
 	head1.position.set(4.5,10,22.5);
 	//head2
 	var h2geometry = new THREE.BoxGeometry(5,5,10); //geometry 幾何 y-2.5
-	var material = new THREE.MeshBasicMaterial( { color: 0x46A3FF } );
+	var material = new THREE.MeshPhongMaterial( { color: 0x46A3FF } );
 	var head2 = new THREE.Mesh( h2geometry,material);
 	head2.position.set(4.5,5,25);
 	//body
 	var bgeometry = new THREE.BoxGeometry(5,13,20); //geometry 幾何 y-2.5
-	var material = new THREE.MeshBasicMaterial( { color: 0x0066CC } );
+	var material = new THREE.MeshPhongMaterial( { color: 0x0066CC } );
 	var body = new THREE.Mesh( bgeometry,material);
 	body.position.set(4.5,9,10);
 	//wheel
 	var cgeometry = new THREE.CylinderGeometry(2.5,2.5,2,64);// 半徑+2.5 高-5
-	var material = new THREE.MeshBasicMaterial( { color: 0x000000 } );
+	var material = new THREE.MeshPhongMaterial( { color: 0x000000 } );
 	var wheel = new THREE.Mesh(cgeometry,material);
 	var wheel2 = wheel.clone();
 	var wheel3 = wheel.clone();
@@ -134,18 +159,83 @@ function truck(){
 	wheel3.rotation.z = Math.PI / 2;
 	wheel4.rotation.z = Math.PI / 2;
 	
-	//frame.add(extrude,head1);
+	frame.add(extrude);
 	frame.add(head1,head2,body,wheel,wheel2,wheel3,wheel4);
 }
 
 
 function animate() { 
 
+ if(isRunning){
+	running();
+ }
+ else{
+	rotate();
+ }
+
  renderer.render (scene, camera); 
  requestAnimationFrame( animate ); 
 
 }
 
+function running(){
+	moveTo = moveTo.clone().add (v.clone().setLength(ds));
+	stepNum++;
+  if (stepNum > steps){
+	car.position.copy (point[next]);
+	isRunning = false;
+	next++;now++;front++;
+	next %= point.length;now %= point.length;front %= point.length;
+	
+	  var p12 = point[now].clone().sub(point[front]);   // p12 = p2 - p1
+	  theta1 = Math.atan2 (p12.x, p12.z);
+	  car.position.copy (point[now]);
+	  car.rotation.y = theta1;
+
+	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
+	  theta2 = Math.atan2 (p23.x, p23.z);
+
+		dq = 0.01;
+	  
+	 // steps = Math.floor ((theta2-theta1)/dq);
+	  steps = Math.floor ((theta2-theta1)/dq);
+	  
+	  if (theta1 > theta2) {
+		steps = -steps;
+		dq = -dq;
+	  }
+	   // debugger;
+	  stepNum = 0;
+	  moveTo = theta1;
+	  
+  
+  }
+		
+  else 
+		car.position.copy (moveTo);
+
+}
+function rotate(){
+
+	  if (stepNum > steps){
+		car.rotation.y = theta2;
+		isRunning = true;
+		
+		 v = point[next].clone().sub(point[now]); // v = p2 - p1
+		  ds = 0.31;
+		  steps = Math.floor(v.length()/ds);
+		  moveTo = point[now].clone();
+		  stepNum = 0;
+	  }
+		
+	else {
+		car.rotation.y = moveTo; 
+		++stepNum;
+		moveTo += dq;
+	}
+  
+
+}
 
 </script> 
 

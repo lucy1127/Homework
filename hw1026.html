@@ -200,21 +200,22 @@ function running(){
 
 	  dq = 0.01; // 旋轉的移動的距離
 	  
+	  if (theta1 >  0 && theta2 < 0) { // 異號
+		theta2 += Math.PI * 2;
+	  }
+	  
+	  if (theta1 <  0 && theta2 > 0) { // 異號
+		theta1 += Math.PI * 2;
+	  }
+	  
 	  steps = Math.floor ((theta2-theta1)/dq);
 	  
 	  if (theta1 > theta2) { // 1角度較大時
 		steps = -steps;
 		dq = -dq;
 	  }
-	  if (theta1 >  0 && theta2 < 0) { // 異號
 	  
-		steps = Math.floor ((theta1-theta2)- (Math.PI/2)/dq);
-		dq = -dq;
-	  }
-	  if (theta1 <  0 && theta2 > 0) { // 異號
-		steps = Math.floor ((theta2-theta1)- (Math.PI/2)/dq);
-		dq = dq;
-	  }
+	  
 	  
 	  
 	   // debugger;

@@ -62,7 +62,7 @@ function init() {
 
 function animate2() {
 	
-	moveTo = moveTo.clone().add (v.clone().setLength(ds))
+	moveTo = moveTo.clone().add (v.clone().setLength(ds));
 	stepNum++;
   if (stepNum > steps)
 		move.position.copy (p2);

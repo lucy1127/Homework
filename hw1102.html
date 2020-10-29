@@ -17,7 +17,7 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script src="https://threejs.org/build/three.min.js"></script>
+
 
 <script type ="module">
 javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
@@ -29,10 +29,15 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 // my script
 
 var renderer, camera, scene; 
-var axes,frame;
+var axes,frame,car;
+
+//move
+var point,now,next,front,isRunning;
+var v, ds, moveTo, stepNum, steps;
+var theta1, theta2, dq;
+
 
 //new
-
 var raycaster;
 var mouse = new THREE.Vector2();
 var pickables = [];
@@ -64,7 +69,7 @@ function init() {
  
  var light = new THREE.SpotLight(0xffffff); //打光
  var spotLightHelper = new THREE.SpotLightHelper(light);
- light.position.set (-20,50,0);
+ light.position.set (-20,100,0);
  scene.add(light,spotLightHelper);
  
  var light2 = new THREE.AmbientLight(0x404040);
@@ -72,8 +77,25 @@ function init() {
  
  frame = new THREE.Object3D();
  frame.position.set(-5,0,-12.5);
- scene.add(frame);
+ car = new THREE.Object3D();
+ car.add(frame);
+ scene.add(car);
  truck();
+ 
+ 
+  point = [ onDocumentMouseDown(event) ];
+  now = 0;
+  next = 1;
+  front = point.length - 1; //原點的前一個
+  isRunning = true; // 走
+  
+ 
+  v = point[next].clone().sub(point[now]); // v = p2 - p1
+  ds = 0.31; // 一步的距離
+  steps = Math.floor(v.length()/ds); // 總共步數
+  moveTo = point[now].clone(); // 移動car的
+  stepNum = 0; //計算步數
+  
  
  //new 
   var plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ transparent: true,opacity: 0.5,visible: true}));
@@ -104,9 +126,11 @@ function onDocumentMouseDown(event) {
   raycaster.setFromCamera(mouse, camera);
   var intersects = raycaster.intersectObjects(pickables);
   if (intersects.length > 0) {
-    frame.position.copy(intersects[0].point);
+    car.position.copy(intersects[0].point); // *
   }
 
+	mouse.x = 0;
+	mouse.y = 0;
 }
 
 function truck(){
@@ -175,9 +199,85 @@ function truck(){
 
 function animate() {
 
- renderer.render (scene, camera); 
- requestAnimationFrame( animate ); 
+	if(isRunning){
+		running(); //直走
+	 }
+	 else{
+		rotate(); // 旋轉
+	 }
 
+	renderer.render (scene, camera); 
+	requestAnimationFrame( animate ); 
+}
+
+function running(){
+
+	moveTo = moveTo.clone().add (v.clone().setLength(ds)); // 移動 + 向量 V + 一步的距離
+	stepNum++; // 步數++
+	
+	if (stepNum > steps){ // 步數 > 總步數 代表已抵達
+		car.position.copy (point[next]);  //指到下一個點
+		isRunning = false; // 旋轉
+		next++;now++;front++; //移動到下一個點
+		next %= point.length;now %= point.length;front %= point.length; //超過點的數量 從起點開始
+	
+	  var p12 = point[now].clone().sub(point[front]);   // p12 = p2 - p1
+	  theta1 = Math.atan2 (p12.x, p12.z); //角度
+	  car.position.copy (point[now]);
+	  car.rotation.y = theta1;
+
+	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
+	  theta2 = Math.atan2 (p23.x, p23.z); //角度
+
+	  dq = 0.01; // 旋轉的移動的距離
+	  
+	  if (theta1 >  0 && theta2 < 0) { // 異號
+		theta2 += Math.PI * 2;
+	  }
+	  
+	  if (theta1 <  0 && theta2 > 0) { // 異號
+		theta1 += Math.PI * 2;
+	  }
+	  
+	  steps = Math.floor ((theta2-theta1)/dq);
+	  
+	  if (theta1 > theta2) { // 1角度較大時
+		steps = -steps;
+		dq = -dq;
+	  }
+	  
+	  
+	  
+	  
+	   // debugger;
+	  stepNum = 0;
+	  moveTo = theta1;
+	  
+  }
+		
+  else 
+		car.position.copy (moveTo);
+
+}
+function rotate(){
+
+	  if (stepNum > steps){ // 步數 > 總步數 代表已抵達
+		car.rotation.y = theta2;
+		isRunning = true; // 繼續走
+		
+		 v = point[next].clone().sub(point[now]); // v = p2 - p1
+		  ds = 0.31;
+		  steps = Math.floor(v.length()/ds);
+		  moveTo = point[now].clone();
+		  stepNum = 0;
+	  }
+		
+	else {
+		car.rotation.y = moveTo; 
+		++stepNum;
+		moveTo += dq;
+	}
+ 
 }
 
 </script> 

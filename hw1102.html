@@ -49,8 +49,8 @@ function init() {
  renderer.setClearColor (0x888888); 
  document.body.appendChild (renderer.domElement); 
  
- camera = new THREE.PerspectiveCamera (100, window.innerWidth/window.innerHeight, 1, 1000);
- camera. position.z = 50;// (0,0,50) 
+ camera = new THREE.PerspectiveCamera (50, window.innerWidth/window.innerHeight, 1, 1000);
+ camera. position.z = 500;
  
 
  var controls = new OrbitControls (camera, renderer.domElement);
@@ -58,7 +58,7 @@ function init() {
  axes = new THREE.AxesHelper(30);
  
  scene = new THREE.Scene(); 
- var grid = new THREE.GridHelper (100, 10, 'red', 'white');
+ var grid = new THREE.GridHelper (200, 10, 'red', 'white');
  scene. add (grid);
  scene. add (axes);
  
@@ -76,7 +76,11 @@ function init() {
  truck();
  
  //new 
-  pickables = [frame];
+  var plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ transparent: true,opacity: 0.5,visible: true}));
+  scene.add(plane);
+  plane.rotation.x = -Math.PI / 2;
+  pickables = [plane];
+  
   raycaster = new THREE.Raycaster();
   document.addEventListener('pointerdown', onDocumentMouseDown, false);
   
@@ -100,7 +104,7 @@ function onDocumentMouseDown(event) {
   raycaster.setFromCamera(mouse, camera);
   var intersects = raycaster.intersectObjects(pickables);
   if (intersects.length > 0) {
-   frame.position.copy(intersects[0].point);
+    frame.position.copy(intersects[0].point);
   }
 
 }
@@ -175,8 +179,6 @@ function animate() {
  requestAnimationFrame( animate ); 
 
 }
-
-
 
 </script> 
 

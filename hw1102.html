@@ -1,3 +1,4 @@
+
 <!DOCTYPE html> 
 <html> 
 <head> 
@@ -24,7 +25,8 @@ javascript:(function(){var script=document.createElement('script');script.onload
 
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
-
+//import { MTLLoader } from 'https://unpkg.com/three-obj-mtl-loader-wpk@1.0.7/lib/loaders/MTLLoader.js';
+//import { OBJLoader } from 'https://unpkg.com/three-obj-mtl-loader-wpk@1.0.7/lib/loaders/OBJLoader.js';
 
 // my script
 
@@ -46,6 +48,67 @@ var pickables = [];
 
 init(); 
 animate(); 
+
+/*function readModel (modelName, targetSize=40) {
+
+  var onProgress = function(xhr) {
+    if (xhr.lengthComputable) {
+      var percentComplete = xhr.loaded / xhr.total * 100;
+      console.log(Math.round(percentComplete, 2) + '% downloaded');
+    }
+  };
+
+  var onError = function(xhr) {};
+
+  var mtlLoader = new THREE.MTLLoader();
+  mtlLoader.setPath('models/');
+  mtlLoader.load(modelName+'.mtl', function(materials) {
+
+    materials.preload();
+
+    var objLoader = new THREE.OBJLoader();
+    objLoader.setMaterials(materials);
+    objLoader.setPath('models/');
+    objLoader.load(modelName+'.obj', function(object) {
+		
+		car =  unitize (object, targetSize);
+		//theObject.add ( new THREE.BoxHelper (theObject) )
+		car.name = 'OBJ'
+		scene.add (car);
+		
+		car.setRotationFromEuler (new THREE.Euler (3.1416/2, 0, -3.1416/2, 'ZYX'))
+
+    }, onProgress, onError);
+
+  });
+
+}
+
+function unitize (object, targetSize) {  
+	
+	// find bounding box of 'object'
+	var box3 = new THREE.Box3();
+	box3.setFromObject (object);
+	var size = new THREE.Vector3();
+	size.subVectors (box3.max, box3.min);
+	var center = new THREE.Vector3();
+	center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+	
+	console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+	console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+	
+	// uniform scaling according to objSize
+	var objSize = Math.max (size.x, size.y, size.z);
+	var scaleSet = targetSize/objSize;
+				
+	var theObject =  new THREE.Object3D();
+	theObject.add (object);
+	object.scale.set (scaleSet, scaleSet, scaleSet);
+	object.position.set (-center.x*scaleSet, -center.y*scaleSet, -center.z*scaleSet);
+	
+	return theObject;
+}*/
+
 
 function init() { 
 
@@ -75,27 +138,15 @@ function init() {
  var light2 = new THREE.AmbientLight(0x404040);
  scene.add(light2);
  
- frame = new THREE.Object3D();
- frame.position.set(-5,0,-12.5);
- car = new THREE.Object3D();
- car.add(frame);
- scene.add(car);
- truck();
+	frame = new THREE.Object3D();
+	frame.position.set(-5,0,-12.5);
+	car = new THREE.Object3D();
+	car.add(frame);
+	scene.add(car);
+	truck();
+	//readModel('car');
  
- 
-  point = [ onDocumentMouseDown(event) ];
-  now = 0;
-  next = 1;
-  front = point.length - 1; //原點的前一個
-  isRunning = true; // 走
-  
- 
-  v = point[next].clone().sub(point[now]); // v = p2 - p1
-  ds = 0.31; // 一步的距離
-  steps = Math.floor(v.length()/ds); // 總共步數
-  moveTo = point[now].clone(); // 移動car的
-  stepNum = 0; //計算步數
-  
+  point = [new THREE.Vector3(0,0,0)];  // 起始點
  
  //new 
   var plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ transparent: true,opacity: 0.5,visible: true}));
@@ -123,14 +174,61 @@ function onDocumentMouseDown(event) {
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
   // find intersections
-  raycaster.setFromCamera(mouse, camera);
-  var intersects = raycaster.intersectObjects(pickables);
+  raycaster.setFromCamera(mouse, camera);  // 從相機 打出 場景座標點
+  var intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
   if (intersects.length > 0) {
-    car.position.copy(intersects[0].point); // *
-  }
+	// console.log(point.length);
+	
+	if(point.length < 5)
+		point.push(intersects[0].point); // 加入 點
+		
+	if(point.length == 5){ // 點完後再初始化
+		now = 0;
+		next = 1;
+		front = point.length - 1; //原點的前一個
+		isRunning = false; // 走
 
-	mouse.x = 0;
-	mouse.y = 0;
+	  theta1 = 0; //角度
+	  car.position.copy (point[now]);
+	  car.rotation.y = theta1;
+
+	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
+	  theta2 = Math.atan2 (p23.x, p23.z); //角度
+
+	  dq = 0.03; // 旋轉的移動的距離
+	  
+	  
+	  if (theta2 < 0) { // 異號
+		theta2 += Math.PI * 2;
+	  }
+	  
+	  if (theta1 <  0) { // 異號
+		theta1 += Math.PI * 2;
+	  }
+	  
+	  if(theta1 > theta2){
+		if(theta1 - Math.PI > theta2){
+			steps = Math.floor ((Math.PI * 2 - (theta1-theta2))/dq);
+		}
+		else {
+			steps = Math.floor ((theta1-theta2)/dq);
+			dq = -dq;
+		}
+	  }
+	  else {
+		if(theta2 - Math.PI > theta1){
+			steps = Math.floor ((Math.PI * 2 - (theta2-theta1))/dq);
+			dq = -dq;
+		}
+		else {
+			steps = Math.floor ((theta2-theta1)/dq);
+		}
+	  }
+	  
+	  stepNum = 0;
+	  moveTo = theta1;
+	}
+  }
 }
 
 function truck(){
@@ -198,13 +296,15 @@ function truck(){
 
 
 function animate() {
-
-	if(isRunning){
-		running(); //直走
-	 }
-	 else{
-		rotate(); // 旋轉
-	 }
+	
+	if(point.length == 5){
+		if(isRunning){
+			running(); //直走
+		}
+		else{
+			rotate(); // 旋轉
+		}
+	}
 
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 
@@ -229,21 +329,33 @@ function running(){
 	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
 	  theta2 = Math.atan2 (p23.x, p23.z); //角度
 
-	  dq = 0.01; // 旋轉的移動的距離
+	  dq = 0.03; // 旋轉的移動的距離
 	  
-	  if (theta1 >  0 && theta2 < 0) { // 異號
+	  if (theta2 < 0) { // 異號
 		theta2 += Math.PI * 2;
 	  }
 	  
-	  if (theta1 <  0 && theta2 > 0) { // 異號
+	  if (theta1 <  0) { // 異號
 		theta1 += Math.PI * 2;
 	  }
 	  
-	  steps = Math.floor ((theta2-theta1)/dq);
-	  
-	  if (theta1 > theta2) { // 1角度較大時
-		steps = -steps;
-		dq = -dq;
+	  if(theta1 > theta2){
+		if(theta1 - Math.PI > theta2){
+			steps = Math.floor ((Math.PI * 2 - (theta1-theta2))/dq);
+		}
+		else {
+			steps = Math.floor ((theta1-theta2)/dq);
+			dq = -dq;
+		}
+	  }
+	  else {
+		if(theta2 - Math.PI > theta1){
+			steps = Math.floor ((Math.PI * 2 - (theta2-theta1))/dq);
+			dq = -dq;
+		}
+		else {
+			steps = Math.floor ((theta2-theta1)/dq);
+		}
 	  }
 	  
 	  
@@ -266,7 +378,7 @@ function rotate(){
 		isRunning = true; // 繼續走
 		
 		 v = point[next].clone().sub(point[now]); // v = p2 - p1
-		  ds = 0.31;
+		  ds = 0.5;
 		  steps = Math.floor(v.length()/ds);
 		  moveTo = point[now].clone();
 		  stepNum = 0;

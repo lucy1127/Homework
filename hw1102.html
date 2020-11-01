@@ -31,7 +31,7 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 // my script
 
 var renderer, camera, scene; 
-var axes,frame,car;
+var axes,frame,car,line;
 
 //move
 var point,now,next,front,isRunning;
@@ -147,6 +147,10 @@ function init() {
 	//readModel('car');
  
   point = [new THREE.Vector3(0,0,0)];  // 起始點
+  var geometry = new THREE.BufferGeometry().setFromPoints(point);
+  var material = new THREE.LineBasicMaterial({ color : 0x000000});
+  line = new THREE.Line(geometry,material);
+  scene.add(line);
  
  //new 
   var plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ transparent: true,opacity: 0.5,visible: true}));
@@ -182,9 +186,12 @@ function onDocumentMouseDown(event) {
 	if(point.length < 5)
 		point.push(intersects[0].point); // 加入 點
 		
+		
+		
 	if(point.length == 5){ // 點完後再初始化
 		now = 0;
 		next = 1;
+		point.push (new THREE.Vector3(0,0,0)); 
 		front = point.length - 1; //原點的前一個
 		isRunning = false; // 走
 
@@ -225,8 +232,15 @@ function onDocumentMouseDown(event) {
 		}
 	  }
 	  
+	  //point.push (new THREE.Vector3(0,0,0));  
+	  
 	  stepNum = 0;
 	  moveTo = theta1;
+	  
+	  var geometry = new THREE.BufferGeometry().setFromPoints(point);
+	  var material = new THREE.LineBasicMaterial({ color : 0x000000});
+      line = new THREE.Line(geometry,material);
+      scene.add(line);
 	}
   }
 }
@@ -297,7 +311,7 @@ function truck(){
 
 function animate() {
 	
-	if(point.length == 5){
+	if(point.length == 6){
 		if(isRunning){
 			running(); //直走
 		}
@@ -305,7 +319,7 @@ function animate() {
 			rotate(); // 旋轉
 		}
 	}
-
+	scene.add(line);
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 
 }
@@ -321,7 +335,7 @@ function running(){
 		next++;now++;front++; //移動到下一個點
 		next %= point.length;now %= point.length;front %= point.length; //超過點的數量 從起點開始
 	
-	  var p12 = point[now].clone().sub(point[front]);   // p12 = p2 - p1
+	  var p12 = point[now].clone().sub(point[front]);	  // p12 = p2 - p1
 	  theta1 = Math.atan2 (p12.x, p12.z); //角度
 	  car.position.copy (point[now]);
 	  car.rotation.y = theta1;

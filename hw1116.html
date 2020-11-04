@@ -1,20 +1,21 @@
-
 <!DOCTYPE html> 
 <html> 
 <head> 
 <style>
-#heading{
- position:absolute;
- text-align:center;
- width:100vw;
-}
+	#heading{
+	 position:absolute;
+	 text-align:center;
+	 width:100vw;
+	}
 </style> 
 </head>
-<body> 
+
+<body>  
 
 
 <div id='heading'>
  <h1 style ='color:pink'>My Truck</h1>
+ <button id='toggle'> Press </button>
 </div>
 
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -28,10 +29,23 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 import { MTLLoader } from 'https://unpkg.com/three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'https://unpkg.com/three/examples/jsm/loaders/OBJLoader.js';
 
+
+$('#toggle').click(function(){
+ turn = ! turn;
+ 
+ if(turn)
+	$('#toggle').text ('stop');
+ else
+    $('#toggle').text ('turn');
+});
+
 // my script
 
 var renderer, camera, scene; 
 var axes,frame,car,line;
+var turn = false;
+var x;
+
 
 //move
 var point,now,next,front,isRunning;
@@ -39,17 +53,15 @@ var v, ds, moveTo, stepNum, steps;
 var theta1, theta2, dq;
 
 
-//new
-var raycaster;
+var raycaster,intersects;
 var mouse = new THREE.Vector2();
 var pickables = [];
-
 
 
 init(); 
 animate(); 
 
-function readModel (modelName, targetSize=40) {
+/*function readModel (modelName, targetSize=40) {
 
   var onProgress = function(xhr) {
     if (xhr.lengthComputable) {
@@ -108,7 +120,7 @@ function unitize (object, targetSize) {
 	
 	return theObject;
 }
-
+*/
 
 function init() { 
 
@@ -138,13 +150,13 @@ function init() {
  var light2 = new THREE.AmbientLight(0x404040);
  scene.add(light2);
  
-	/*frame = new THREE.Object3D();
+	frame = new THREE.Object3D();
 	frame.position.set(-5,0,-12.5);
 	car = new THREE.Object3D();
 	car.add(frame);
 	scene.add(car);
-	truck();*/
-	readModel('car');
+	truck();
+	//readModel('car');
 	
  
   point = [new THREE.Vector3(0,0,0)];  // 起始點
@@ -160,19 +172,20 @@ function init() {
   pickables = [plane];
   
   raycaster = new THREE.Raycaster();
-  document.addEventListener('pointerdown', onDocumentMouseDown, false);
   
+  document.addEventListener('pointerdown', onDocumentMouseDown, false);
+
+ 
 } 
 
-function onDocumentMouseDown(event) {
+function whichButton(event) {
 
-  // PICKING DETAILS: 
-  // convert mouse.xy = [-1,1]^2 (NDC)
-  // unproject (mouse.xy, 1) to a point on the far plane (in world coordinate)
-  // set raycaster (origin, direction)
-  // find intersection objects, (closest first) 
-  // each record as
-  // [ { distance, point, face, faceIndex, object }, ... ]
+  //alert("You pressed button: " + event.button);
+   x = event.buttons;
+   return false;
+}
+
+function onDocumentMouseDown(event) {
 
   event.preventDefault();
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -180,16 +193,23 @@ function onDocumentMouseDown(event) {
 
   // find intersections
   raycaster.setFromCamera(mouse, camera);  // 從相機 打出 場景座標點
-  var intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
+  intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
+  
+  document.addEventListener('pointerdown', whichButton, false); // 1 -> left 2->right
+  document.addEventListener('contextmenu', event => event.preventDefault()); //to disable right-click default action
+
+	
+  whichButton(event);
+  
   if (intersects.length > 0) {
 	// console.log(point.length);
 	
-	if(point.length < 5)
-		point.push(intersects[0].point); // 加入 點
+		
+	if(x == 1) // 左鍵
+		point.push(intersects[0].point);
 		
 		
-		
-	if(point.length == 5){ // 點完後再初始化
+	if(x == 2){ // 右鍵點完後再初始化
 		now = 0;
 		next = 1;
 		point.push (new THREE.Vector3(0,0,0)); 
@@ -232,9 +252,7 @@ function onDocumentMouseDown(event) {
 			steps = Math.floor ((theta2-theta1)/dq);
 		}
 	  }
-	  
-	  //point.push (new THREE.Vector3(0,0,0));  
-	  
+	  	  
 	  stepNum = 0;
 	  moveTo = theta1;
 	  
@@ -245,6 +263,7 @@ function onDocumentMouseDown(event) {
 	}
   }
 }
+
 
 function truck(){
 	
@@ -312,16 +331,21 @@ function truck(){
 
 function animate() {
 	
-	if(point.length == 6){
-		if(isRunning){
-			running(); //直走
+	
+	if(turn){
+			if(isRunning){
+				running(); //直走
+			}
+			else{
+				rotate(); // 旋轉
+			}
 		}
-		else{
-			rotate(); // 旋轉
-		}
-	}
-	if(car !== undefined)
-	car.position.set(5,0,5);
+	
+	
+	
+	//if(car !== undefined)
+	//car.position.set(5,0,5);
+	
 	scene.add(line);
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 
@@ -374,8 +398,6 @@ function running(){
 			steps = Math.floor ((theta2-theta1)/dq);
 		}
 	  }
-	  
-	  
 	  
 	  
 	   // debugger;

@@ -57,6 +57,12 @@ var raycaster,intersects;
 var mouse = new THREE.Vector2();
 var pickables = [];
 
+//add circle and line
+
+var base, bases = [];
+var myLine = null;
+
+
 
 init(); 
 animate(); 
@@ -155,12 +161,12 @@ function init() {
  var light2 = new THREE.AmbientLight(0x404040);
  scene.add(light2);
  
-	//frame = new THREE.Object3D();
-	//frame.position.set(-5,0,-12.5);
-	//car = new THREE.Object3D();
-	//car.add(frame);
-	//scene.add(car);
-	//truck();
+	/*frame = new THREE.Object3D();
+	frame.position.set(-5,0,-12.5);
+	car = new THREE.Object3D();
+	car.add(frame);
+	scene.add(car);
+	truck();*/
 	readModel('Car');
 	
  
@@ -176,8 +182,9 @@ function init() {
   plane.rotation.x = -Math.PI / 2;
   pickables = [plane];
   
-  raycaster = new THREE.Raycaster();
+  base = new THREE.Mesh(new THREE.CircleGeometry(5, 10), new THREE.MeshNormalMaterial());
   
+  raycaster = new THREE.Raycaster();
   document.addEventListener('pointerdown', onDocumentMouseDown, false);
 
  
@@ -188,6 +195,27 @@ function whichButton(event) {
   //alert("You pressed button: " + event.button);
    x = event.buttons;
    return false;
+}
+
+function makeLine(startPoint) {
+  const MAX_LINE_POINTS = 100;
+  
+  var geometry = new THREE.Geometry();
+	
+	for (var i = 0; i < MAX_LINE_POINTS; i++) {
+		geometry.vertices.push(startPoint.clone());
+  }
+
+  myLine =  new THREE.Line(geometry,  new THREE.LineBasicMaterial( { color: 0x000000 } ));
+
+  return myLine;
+}
+
+function addPoint(myPoint) {
+	myLine.geometry.vertices.shift();
+	myLine.geometry.vertices.push (myPoint);
+	
+	myLine.geometry.verticesNeedUpdate = true;
 }
 
 function onDocumentMouseDown(event) {
@@ -208,11 +236,25 @@ function onDocumentMouseDown(event) {
   if (intersects.length > 0 && x != 2) {
 	console.log(point.length);
 	whichButton(event);
+	
 		
-	if(x == 1) // 左鍵
+	if(x == 1){// 左鍵
+	
 		point.push(intersects[0].point);
+		let bb = base.clone();
+		bb.position.copy (intersects[0].point);
+		bb.rotation.x = -Math.PI/2;
+		scene.add (bb);
+		bases.push (bb);
 		
-		
+		if (myLine === null) {
+			myLine = makeLine (bb.position);
+		  scene.add (myLine);
+		} else {
+			addPoint (bb.position);
+		}
+	} 
+	
 	if(x == 2){ // 右鍵點完後再初始化
 		now = 0;
 		next = 1;
@@ -262,7 +304,7 @@ function onDocumentMouseDown(event) {
 	  
 	  var point2 = [];
 	  for(let i = 0; i < point.length; i++)
-		point2.push(point[i]);
+	  point2.push(point[i]);
 	  point2.push(new THREE.Vector3());
 	  
 	  var geometry = new THREE.BufferGeometry().setFromPoints(point2);
@@ -273,69 +315,6 @@ function onDocumentMouseDown(event) {
   }
 }
 
-
-function truck(){
-	
-	//ExtrudeGeometry
-	var length = 0.5, width = 0.5;
-	var shape = new THREE.Shape();
-	shape.moveTo( 0,0 );
-	shape.lineTo( 0, width );
-	shape.lineTo( length, width );
-	shape.lineTo( length, 0 );
-	shape.lineTo( 0, 0 );
-
-	var extrudeSettings = {
-		steps: 2, //側面三角形
-		depth: 2.5, //長方體長度
-		bevelEnabled: true,
-		bevelThickness: 1,//頭的斜角長度
-		bevelSize: 2.1,//長方體寬度
-		bevelOffset: 0, //頭的正面
-		bevelSegments: 1//斜角三角形
-	};
-	
-	var egeometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-	var material = new THREE.MeshPhongMaterial( { color: 0x00ffff } );
-	var extrude = new THREE.Mesh( egeometry, material ) ;
-	extrude.position.set(4.3,9,23);
-	
-	//head1
-	var h1geometry = new THREE.BoxGeometry(5,5,5); //geometry 幾何 y-2.5
-	var material = new THREE.MeshPhongMaterial( { color: 0x2894FF } );
-	var head1 = new THREE.Mesh( h1geometry,material);
-	head1.position.set(4.5,10,22.5);
-	//head2
-	var h2geometry = new THREE.BoxGeometry(5,5,10); //geometry 幾何 y-2.5
-	var material = new THREE.MeshPhongMaterial( { color: 0x46A3FF } );
-	var head2 = new THREE.Mesh( h2geometry,material);
-	head2.position.set(4.5,5,25);
-	//body
-	var bgeometry = new THREE.BoxGeometry(5,13,20); //geometry 幾何 y-2.5
-	var material = new THREE.MeshPhongMaterial( { color: 0x0066CC } );
-	var body = new THREE.Mesh( bgeometry,material);
-	body.position.set(4.5,9,10);
-	//wheel
-	var cgeometry = new THREE.CylinderGeometry(2.5,2.5,2,64);// 半徑+2.5 高-5
-	var material = new THREE.MeshPhongMaterial( { color: 0x000000 } );
-	var wheel = new THREE.Mesh(cgeometry,material);
-	var wheel2 = wheel.clone();
-	var wheel3 = wheel.clone();
-	var wheel4 = wheel.clone();
-	
-	wheel.position.set(8, 2.5, 25); //x,y,z 左邊 y+2.5
-	wheel2.position.set(1, 2.5, 25);
-	wheel3.position.set(8, 2.5, 5);
-	wheel4.position.set(1, 2.5, 5);
-	
-	wheel.rotation.z = Math.PI / 2;
-	wheel2.rotation.z = Math.PI / 2;
-	wheel3.rotation.z = Math.PI / 2;
-	wheel4.rotation.z = Math.PI / 2;
-	
-	frame.add(extrude);
-	frame.add(head1,head2,body,wheel,wheel2,wheel3,wheel4);
-}
 
 
 function animate() {

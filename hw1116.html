@@ -260,7 +260,7 @@ function onDocumentMouseDown(event) {
 	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
 	  theta2 = Math.atan2 (p23.x, p23.z); //角度
 
-	  dq = 0.03; // 旋轉的移動的距離
+	  dq = 0.06; // 旋轉的移動的距離
 	  
 	  
 	  if (theta2 < 0) { // 異號
@@ -343,7 +343,7 @@ function running(){
 	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
 	  theta2 = Math.atan2 (p23.x, p23.z); //角度
 
-	  dq = 0.03; // 旋轉的移動的距離
+	  dq = 0.06; // 旋轉的移動的距離
 	  
 	  if (theta2 < 0) { // 異號
 		theta2 += Math.PI * 2;
@@ -390,7 +390,7 @@ function rotate(){
 		isRunning = true; // 繼續走
 		
 		 v = point[next].clone().sub(point[now]); // v = p2 - p1
-		  ds = 0.5;
+		  ds = 0.8;
 		  steps = Math.floor(v.length()/ds);
 		  moveTo = point[now].clone();
 		  stepNum = 0;

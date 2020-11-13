@@ -90,7 +90,6 @@ function readModel (modelName, targetSize=40) {
     objLoader.load(modelName+'.obj', function(object) {
 		
 		let t =  unitize (object, targetSize);
-		//theObject.add ( new THREE.BoxHelper (theObject) )
 		t.name = 'OBJ'
 		t.position.y = 8;
 		
@@ -98,7 +97,6 @@ function readModel (modelName, targetSize=40) {
 		car.add(t);
 		
 		scene.add (car);
-		//car.setRotationFromEuler (new THREE.Euler (3.1416/2, 0, -3.1416/2, ''))
 
     }, onProgress, onError);
 
@@ -161,12 +159,7 @@ function init() {
  var light2 = new THREE.AmbientLight(0x404040);
  scene.add(light2);
  
-	/*frame = new THREE.Object3D();
-	frame.position.set(-5,0,-12.5);
-	car = new THREE.Object3D();
-	car.add(frame);
-	scene.add(car);
-	truck();*/
+
 	readModel('Car');
 	
  
@@ -228,7 +221,6 @@ function onDocumentMouseDown(event) {
   raycaster.setFromCamera(mouse, camera);  // 從相機 打出 場景座標點
   intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
   
-  //document.addEventListener('pointerdown', whichButton, false); // 1 -> left 2->right
   document.addEventListener('contextmenu', event => event.preventDefault()); //to disable right-click default action
 
 	
@@ -258,7 +250,6 @@ function onDocumentMouseDown(event) {
 	if(x == 2){ // 右鍵點完後再初始化
 		now = 0;
 		next = 1;
-		//point.push (new THREE.Vector3(0,0,0)); 
 		front = point.length - 1; //原點的前一個
 		isRunning = false; // 走
 

@@ -31,7 +31,6 @@ import { OBJLoader } from 'https://unpkg.com/three/examples/jsm/loaders/OBJLoade
 
 
 $('#toggle').click(function(){
-
  turn = ! turn;
  
  if(turn)
@@ -43,12 +42,24 @@ $('#toggle').click(function(){
 // my script
 
 var renderer, camera, scene; 
-var car,x;
+var axes,frame,car,line;
 var turn = false;
+var x;
+
+
 //move
-var point=[],now,next,front,isRunning;
-var v, moveTo, stepNum, steps,theta2;
-var raycaster,pickables = [];
+var point,now,next,front,isRunning;
+var v, ds, moveTo, stepNum, steps;
+var theta1, theta2, dq;
+
+
+var raycaster,intersects;
+var mouse = new THREE.Vector2();
+var pickables = [];
+
+//add circle and line
+
+var base, bases = [];
 var myLine = null;
 
 
@@ -78,14 +89,14 @@ function readModel (modelName, targetSize=40) {
     objLoader.setPath('models/');
     objLoader.load(modelName+'.obj', function(object) {
 		
-	let t =  unitize (object, targetSize);
-	t.name = 'OBJ'
-	t.position.y = 8;
+		let t =  unitize (object, targetSize);
+		t.name = 'OBJ'
+		t.position.y = 8;
 		
-	car = new THREE.Object3D();
-	car.add(t);
+		car = new THREE.Object3D();
+		car.add(t);
 		
-	scene.add (car);
+		scene.add (car);
 
     }, onProgress, onError);
 
@@ -133,7 +144,7 @@ function init() {
 
  var controls = new OrbitControls (camera, renderer.domElement);
  
- var axes = new THREE.AxesHelper(30);
+ axes = new THREE.AxesHelper(30);
  
  scene = new THREE.Scene(); 
  var grid = new THREE.GridHelper (200, 10, 'red', 'white');
@@ -149,22 +160,34 @@ function init() {
  scene.add(light2);
  
 
- readModel('Car');
+	readModel('Car');
+	
  
+  point = [new THREE.Vector3(0,0,0)];  // 起始點
+  var geometry = new THREE.BufferGeometry().setFromPoints(point);
+  var material = new THREE.LineBasicMaterial({ color : 0x000000});
+  line = new THREE.Line(geometry,material);
+  scene.add(line);
  
- var plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ transparent: true,opacity: 0.5,visible: true}));
- scene.add(plane);
- plane.rotation.x = -Math.PI / 2;
- pickables = [plane];
+ //new 
+  var plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ transparent: true,opacity: 0.5,visible: true}));
+  scene.add(plane);
+  plane.rotation.x = -Math.PI / 2;
+  pickables = [plane];
   
- raycaster = new THREE.Raycaster();
- document.addEventListener('pointerdown', onDocumentMouseDown, false);
+  base = new THREE.Mesh(new THREE.CircleGeometry(5, 10), new THREE.MeshNormalMaterial());
+  
+  raycaster = new THREE.Raycaster();
+  document.addEventListener('pointerdown', onDocumentMouseDown, false);
 
  
 } 
 
 function whichButton(event) {
+
+  //alert("You pressed button: " + event.button);
    x = event.buttons;
+   return false;
 }
 
 function makeLine(startPoint) {
@@ -172,8 +195,8 @@ function makeLine(startPoint) {
   
   var geometry = new THREE.Geometry();
 	
-  for (var i = 0; i < MAX_LINE_POINTS; i++) {
-	geometry.vertices.push(startPoint.clone());
+	for (var i = 0; i < MAX_LINE_POINTS; i++) {
+		geometry.vertices.push(startPoint.clone());
   }
 
   myLine =  new THREE.Line(geometry,  new THREE.LineBasicMaterial( { color: 0x000000 } ));
@@ -182,30 +205,28 @@ function makeLine(startPoint) {
 }
 
 function addPoint(myPoint) {
-  myLine.geometry.vertices.shift();
-  myLine.geometry.vertices.push (myPoint);
+	myLine.geometry.vertices.shift();
+	myLine.geometry.vertices.push (myPoint);
 	
-  myLine.geometry.verticesNeedUpdate = true;
+	myLine.geometry.verticesNeedUpdate = true;
 }
 
 function onDocumentMouseDown(event) {
 
   event.preventDefault();
-  var mouse = new THREE.Vector2();
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
   // find intersections
   raycaster.setFromCamera(mouse, camera);  // 從相機 打出 場景座標點
-  var intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
-  var base = new THREE.Mesh(new THREE.CircleGeometry(5, 10), new THREE.MeshNormalMaterial());
+  intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
   
   document.addEventListener('contextmenu', event => event.preventDefault()); //to disable right-click default action
 
 	
   
   if (intersects.length > 0 && x != 2) {
-	
+	console.log(point.length);
 	whichButton(event);
 	
 		
@@ -216,7 +237,6 @@ function onDocumentMouseDown(event) {
 		bb.position.copy (intersects[0].point);
 		bb.rotation.x = -Math.PI/2;
 		scene.add (bb);
-		var bases = [];
 		bases.push (bb);
 		
 		if (myLine === null) {
@@ -233,14 +253,14 @@ function onDocumentMouseDown(event) {
 		front = point.length - 1; //原點的前一個
 		isRunning = false; // 走
 
-	  var theta1 = 0; //角度
+	  theta1 = 0; //角度
 	  car.position.copy (point[now]);
 	  car.rotation.y = theta1;
 
 	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
-	      theta2 = Math.atan2 (p23.x, p23.z); //角度
+	  theta2 = Math.atan2 (p23.x, p23.z); //角度
 
-	  var dq = 0.06; // 旋轉的移動的距離
+	  dq = 0.06; // 旋轉的移動的距離
 	  
 	  
 	  if (theta2 < 0) { // 異號
@@ -276,11 +296,11 @@ function onDocumentMouseDown(event) {
 	  var point2 = [];
 	  for(let i = 0; i < point.length; i++)
 	  point2.push(point[i]);
-	  point2.push(point[0]);
+	  point2.push(new THREE.Vector3());
 	  
 	  var geometry = new THREE.BufferGeometry().setFromPoints(point2);
 	  var material = new THREE.LineBasicMaterial({ color : 0x000000});
-      var line = new THREE.Line(geometry,material);
+      line = new THREE.Line(geometry,material);
       scene.add(line);
 	}
   }
@@ -297,13 +317,16 @@ function animate() {
 				rotate(); // 旋轉
 			}
 		}
+	
+	
+	//scene.add(line);
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 
 }
 
 function running(){
 
-	moveTo = moveTo.clone().add (v.clone().setLength(0.8)); // 移動 + 向量 V + 一步的距離
+	moveTo = moveTo.clone().add (v.clone().setLength(ds)); // 移動 + 向量 V + 一步的距離
 	stepNum++; // 步數++
 	
 	if (stepNum > steps){ // 步數 > 總步數 代表已抵達
@@ -313,14 +336,14 @@ function running(){
 		next %= point.length;now %= point.length;front %= point.length; //超過點的數量 從起點開始
 	
 	  var p12 = point[now].clone().sub(point[front]);	  // p12 = p2 - p1
-	  var theta1 = Math.atan2 (p12.x, p12.z); //角度
+	  theta1 = Math.atan2 (p12.x, p12.z); //角度
 	  car.position.copy (point[now]);
 	  car.rotation.y = theta1;
 
 	  var p23 = point[next].clone().sub(point[now]);   // p23 = p3 - p2
-	      theta2 = Math.atan2 (p23.x, p23.z); //角度
+	  theta2 = Math.atan2 (p23.x, p23.z); //角度
 
-	  var dq = 0.06; // 旋轉的移動的距離
+	  dq = 0.06; // 旋轉的移動的距離
 	  
 	  if (theta2 < 0) { // 異號
 		theta2 += Math.PI * 2;
@@ -366,17 +389,17 @@ function rotate(){
 		car.rotation.y = theta2;
 		isRunning = true; // 繼續走
 		
-		 var ds = 0.08;
 		 v = point[next].clone().sub(point[now]); // v = p2 - p1
-		 steps = Math.floor(v.length()/ds);
-		 moveTo = point[now].clone();
-		 stepNum = 0;
+		  ds = 0.8;
+		  steps = Math.floor(v.length()/ds);
+		  moveTo = point[now].clone();
+		  stepNum = 0;
 	  }
 		
 	else {
 		car.rotation.y = moveTo; 
 		++stepNum;
-		moveTo += 0.06;
+		moveTo += dq;
 	}
  
 }

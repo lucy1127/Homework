@@ -296,7 +296,7 @@ function onDocumentMouseDown(event) {
 	  var point2 = [];
 	  for(let i = 0; i < point.length; i++)
 	  point2.push(point[i]);
-	  point2.push(new THREE.Vector3());
+	  point2.push(point[0]);
 	  
 	  var geometry = new THREE.BufferGeometry().setFromPoints(point2);
 	  var material = new THREE.LineBasicMaterial({ color : 0x000000});

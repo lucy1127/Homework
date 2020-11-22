@@ -41,15 +41,25 @@ $('#toggle').click(function(){
 
 // my script
 
-var renderer, camera, scene,car,line;
+var renderer, camera, scene; 
+var axes,frame,car,line;
 var turn = false;
 var x;
+
+
 //move
 var point,now,next,front,isRunning;
 var v, ds, moveTo, stepNum, steps;
 var theta1, theta2, dq;
 
-var raycaster,pickables = [];
+
+var raycaster,intersects;
+var mouse = new THREE.Vector2();
+var pickables = [];
+
+//add circle and line
+
+var base, bases = [];
 var myLine = null;
 
 
@@ -134,7 +144,7 @@ function init() {
 
  var controls = new OrbitControls (camera, renderer.domElement);
  
- var axes = new THREE.AxesHelper(30);
+ axes = new THREE.AxesHelper(30);
  
  scene = new THREE.Scene(); 
  var grid = new THREE.GridHelper (200, 10, 'red', 'white');
@@ -156,7 +166,7 @@ function init() {
   point = [new THREE.Vector3(0,0,0)];  // 起始點
   var geometry = new THREE.BufferGeometry().setFromPoints(point);
   var material = new THREE.LineBasicMaterial({ color : 0x000000});
-  var line = new THREE.Line(geometry,material);
+  line = new THREE.Line(geometry,material);
   scene.add(line);
  
  //new 
@@ -165,6 +175,7 @@ function init() {
   plane.rotation.x = -Math.PI / 2;
   pickables = [plane];
   
+  base = new THREE.Mesh(new THREE.CircleGeometry(5, 10), new THREE.MeshNormalMaterial());
   
   raycaster = new THREE.Raycaster();
   document.addEventListener('pointerdown', onDocumentMouseDown, false);
@@ -173,7 +184,10 @@ function init() {
 } 
 
 function whichButton(event) {
-	x = event.buttons;   
+
+  //alert("You pressed button: " + event.button);
+   x = event.buttons;
+   return false;
 }
 
 function makeLine(startPoint) {
@@ -200,22 +214,22 @@ function addPoint(myPoint) {
 function onDocumentMouseDown(event) {
 
   event.preventDefault();
-  var mouse = new THREE.Vector2();
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
   // find intersections
   raycaster.setFromCamera(mouse, camera);  // 從相機 打出 場景座標點
-  var intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
-  var base = new THREE.Mesh(new THREE.CircleGeometry(5, 10), new THREE.MeshNormalMaterial());
+  intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
+  
   document.addEventListener('contextmenu', event => event.preventDefault()); //to disable right-click default action
 
 	
   
-  
   if (intersects.length > 0 && x != 2) {
+	console.log(point.length);
 	whichButton(event);
 	
+		
 	if(x == 1){// 左鍵
 	
 		point.push(intersects[0].point);
@@ -223,7 +237,6 @@ function onDocumentMouseDown(event) {
 		bb.position.copy (intersects[0].point);
 		bb.rotation.x = -Math.PI/2;
 		scene.add (bb);
-		var bases = [];
 		bases.push (bb);
 		
 		if (myLine === null) {
@@ -287,7 +300,7 @@ function onDocumentMouseDown(event) {
 	  
 	  var geometry = new THREE.BufferGeometry().setFromPoints(point2);
 	  var material = new THREE.LineBasicMaterial({ color : 0x000000});
-      var line = new THREE.Line(geometry,material);
+      line = new THREE.Line(geometry,material);
       scene.add(line);
 	}
   }

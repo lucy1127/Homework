@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  position: absolute;
+  top: 3vh;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+
+body {
+  overflow: hidden;
+}
+
+
+</style>
+</head>
+
+<body> 
+<div id='info'>
+  <button id="reset" style="width:20%">Reset Track</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<script type='module'>
+
+import * as THREE from "https://threejs.org/build/three.module.js";
+import { OrbitControls } from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
+
+$("#reset").click(function() {
+  // remove all lines & points
+  lines.forEach (function (line) {scene.remove (line)});
+  pts = [];
+  points.forEach (function(point){scene.remove(point)});
+  // restore picking plane
+  pickables.push (plane);
+  plane.material.visible = true;
+});
+
+// reduce number of global variables ...
+// threejs 必要之惡
+var camera, scene, renderer;
+// for creating the track
+var plane, pickables;
+var pts, lines, points;
+
+init();
+animate();
+
+function init() {
+
+  scene = new THREE.Scene();
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x888888);
+  document.body.appendChild(renderer.domElement);
+
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.set (0, 400,400);
+  let controls = new OrbitControls(camera, renderer.domElement);
+
+  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  scene.add(gridXZ);
+
+  /////////////////////////////////////////////////////////////////////
+	plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0.5,
+    visible: true
+  }));
+  scene.add(plane);
+  plane.rotation.x = -Math.PI / 2;
+  pickables = [plane];
+
+  document.addEventListener('pointerdown', onDocumentMouseDown, false);
+  
+  pts = [];
+  lines = [];
+  points = [];
+}
+
+function makePoint (pos) {
+  var p = new THREE.Mesh (new THREE.CircleGeometry (5,20), 
+  new THREE.MeshBasicMaterial({color:'cyan'}));
+  p.rotation.x = -Math.PI/2;
+  p.position.copy (pos);
+  return p;
+}
+
+function makeLine (p1, p2) {
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push (p1.clone(), p2.clone());
+  	var line = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+    color: 'yellow'
+  }));
+	return line;	
+}
+
+function onDocumentMouseDown(event) {
+
+  // PICKING DETAILS: 
+  // convert mouse.xy = [-1,1]^2 (NDC)
+  // unproject (mouse.xy, 1) to a point on the far plane (in world coordinate)
+  // set raycaster (origin, direction)
+  // find intersection objects, (closest first) 
+  // each record as
+  // [ { distance, point, face, faceIndex, object }, ... ]
+
+  if (event.button === 2) {  
+  	// add line connecting last to first point
+  	let line = makeLine(pts[0], pts[pts.length-1]);
+  	lines.push (line);
+  	scene.add (line);
+  	
+  	// remove picking plane
+  	pickables = [];
+  	plane.material.visible = false;
+  	return;
+  }
+  
+  event.preventDefault();
+  let mouse = new THREE.Vector2();
+  let raycaster = new THREE.Raycaster();
+  
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // find intersections
+  raycaster.setFromCamera(mouse, camera);
+  var intersects = raycaster.intersectObjects(pickables);
+  if (intersects.length > 0) {
+  	pts.push (intersects[0].point.clone() );
+  	let point = makePoint (pts[pts.length-1]); 
+  	points.push (point);
+	scene.add (point);
+	if (pts.length > 1) {
+		let line = makeLine (pts[pts.length-1], pts[pts.length-2]);
+		lines.push (line);
+		scene.add (line);
+	}
+  }
+}
+
+
+function animate() {
+
+  requestAnimationFrame(animate);
+  render();
+
+}
+
+function render() {
+
+  renderer.render(scene, camera);
+
+}
+
+
+</script>
+</body>
+
+</html>
+
+

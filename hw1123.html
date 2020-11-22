@@ -1,0 +1,166 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<style>
+	#heading{
+	 position:absolute;
+	 text-align:center;
+	 width:100vw;
+	}
+</style> 
+</head>
+<body>  
+
+
+<div id='heading'>
+ <h1 style ='color:red'>My Cola</h1>
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
+
+<script type ="module">
+javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+
+import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
+
+var renderer, camera, scene; 
+var texture;
+
+
+init(); 
+animate(); 
+
+function init() { 
+
+ renderer = new THREE.WebGLRenderer ({antialias: true}); 
+ renderer.setSize (window.innerWidth,window.innerHeight); 
+ renderer.setClearColor (0x888888); 
+ document.body.appendChild (renderer.domElement); 
+ 
+ camera = new THREE.PerspectiveCamera (50, window.innerWidth/window.innerHeight, 1, 2000);
+ camera. position.z = 500;
+
+ var controls = new OrbitControls (camera, renderer.domElement);
+ var axes = new THREE.AxesHelper(30);
+ scene = new THREE.Scene(); 
+ var grid = new THREE.GridHelper (200, 10, 'red', 'gray');
+ scene. add (grid);
+ scene. add (axes);
+ var floor = new THREE.Mesh (new THREE.PlaneGeometry(200,200), new THREE.MeshBasicMaterial());
+ floor.rotation.x = -Math.PI/2;
+ scene.add (floor);
+ 
+ /*var light = new THREE.SpotLight(0xffffff); //打光
+ var spotLightHelper = new THREE.SpotLightHelper(light);
+ light.position.set (-20,100,0);
+ scene.add(light,spotLightHelper);
+ 
+ var light2 = new THREE.AmbientLight(0x404040);
+ scene.add(light2);*/
+ ///////////////////////////////////////////////////////////////
+    cola();
+    let loader = new THREE.TextureLoader();
+	loader.crossOrigin = '';
+	 //p.17
+	 
+	 texture = loader.load('https://i.imgur.com/PDucuB5.png');
+	 
+	 var texMat = new THREE.MeshBasicMaterial({
+		map: texture,
+		//transparent: true
+		alphaTest: 0.5
+	  });
+	  var steve = new THREE.Mesh(new THREE.PlaneGeometry(20,40), texMat);
+	  steve.position.set(20,20,0)
+	  scene.add(steve);
+	  //p.29
+	  var cubeMap = loadCubemap();
+	  scene.background = cubeMap;
+	  
+	  var light = new THREE.PointLight(0xffffff, 1, 100);
+	  light.position.set(10, 10, 10);
+	  scene.add(light);
+
+
+	  window.addEventListener('resize', onWindowResize, false);
+} 
+function loadCubemap() {
+
+  var path = "https://threejs.org/examples/textures/cube/SwedishRoyalCastle/";
+  var format = '.jpg';
+  var urls = [
+    path + 'px' + format, path + 'nx' + format,
+    path + 'py' + format, path + 'ny' + format,
+    path + 'pz' + format, path + 'nz' + format
+  ];
+  var loader = new THREE.CubeTextureLoader();
+  loader.setCrossOrigin ('');
+  var cubeMap = loader.load(urls);
+  cubeMap.format = THREE.RGBFormat;
+  return cubeMap;
+  
+}
+
+function  cola(){
+	//body
+    let loader = new THREE.TextureLoader();
+	loader.crossOrigin = '';
+	texture = loader.load('https://i.imgur.com/4YQ9KZZ.png');
+	
+	var geometry = new THREE.CylinderBufferGeometry( 5,5,20,32,1,open);
+    var material = new THREE.MeshBasicMaterial( {map: texture} );
+    var body = new THREE.Mesh( geometry, material );
+    body.position.set(5,10,5);
+	//can
+	var points = [];
+	for ( let i = 0; i < 10; i ++ ) {
+		points.push( new THREE.Vector2( Math.sin( i * 0.15 ) * 0.3 + 5, ( i - 5 ) * 0.2 ) );
+	}
+	var geometry = new THREE.LatheGeometry(points,15,0,6.3);
+	var material = new THREE.MeshBasicMaterial( { color: 0xC0C0C0 } );
+	var lathe = new THREE.Mesh( geometry, material );
+	var lathe2 = lathe.clone();
+	lathe2.rotation.z = Math.PI;
+	lathe.position.set(5,0.55,5);
+	lathe2.position.set(5,19.6,5);
+	//caps
+	
+	texture = loader.load('https://i.imgur.com/EVg17Xg.png');
+	var geometry = new THREE.CircleGeometry(5, 32 );
+	var material = new THREE.MeshBasicMaterial( {map: texture} );
+	var circle = new THREE.Mesh( geometry, material );
+	circle.rotation.x = Math.PI/2;
+	
+	var geometry2 = new THREE.CircleGeometry(5, 32 );
+	texture = loader.load('https://i.imgur.com/hPVtSqz.png');
+	var material2 = new THREE.MeshBasicMaterial( {map: texture} );
+	var circle2 = new THREE.Mesh( geometry2, material2 );
+	circle2.rotation.x = Math.PI/2;
+	circle2.rotation.y = Math.PI;
+	circle.position.set(5,0,5);
+	circle2.position.set(5,20.5,5);
+
+	var frame = new THREE.Object3D();
+	frame.add(body,lathe,lathe2,circle,circle2);
+	scene.add(frame);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+
+function animate() {
+
+	renderer.render (scene, camera); 
+	requestAnimationFrame( animate ); 
+}
+
+
+</script> 
+
+</body>

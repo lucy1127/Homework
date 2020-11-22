@@ -1,0 +1,241 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<style>
+	#heading{
+	 position:absolute;
+	 text-align:center;
+	 width:100vw;
+	}
+</style> 
+</head>
+
+<body>  
+
+
+<div id='heading'>
+ <h1 style ='color:pink'>My Truck</h1>
+ <button id='toggle'> Press </button>
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+
+<script type ="module">
+javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+
+import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
+import { MTLLoader } from 'https://unpkg.com/three/examples/jsm/loaders/MTLLoader.js';
+import { OBJLoader } from 'https://unpkg.com/three/examples/jsm/loaders/OBJLoader.js';
+
+
+
+// my script
+
+var renderer, camera, scene;
+var pickables = [];
+var pts, car,ds = 0.85; 
+var lines, points,startPt,isWalking;
+
+
+
+init(); 
+animate(); 
+
+function init() { 
+
+ renderer = new THREE.WebGLRenderer ({antialias: true}); 
+ 
+ renderer.setSize (window.innerWidth,window.innerHeight); 
+ renderer.setClearColor (0x888888); 
+ document.body.appendChild (renderer.domElement); 
+ 
+ camera = new THREE.PerspectiveCamera (50, window.innerWidth/window.innerHeight, 1, 2000);
+ camera. position.z = 500;
+ 
+ var controls = new OrbitControls (camera, renderer.domElement);
+ var axes = new THREE.AxesHelper(30);
+ scene = new THREE.Scene(); 
+ var grid = new THREE.GridHelper (200, 10, 'red', 'white');
+ scene. add (grid);
+ scene. add (axes);
+ 
+ var light = new THREE.SpotLight(0xffffff); //打光
+ var spotLightHelper = new THREE.SpotLightHelper(light);
+ light.position.set (-20,100,0);
+ scene.add(light,spotLightHelper);
+ 
+ var light2 = new THREE.AmbientLight(0x404040);
+ scene.add(light2);
+ //////////////////////////////////////////////////////
+
+  var plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({ transparent: true,opacity: 0.5,visible: true}));
+  scene.add(plane);
+  plane.rotation.x = -Math.PI / 2;
+  pickables = [plane];
+  
+  pts = [];
+  lines = [];
+  points = [];
+  
+  car = new THREE.Mesh (new THREE.CircleGeometry (10,20), new THREE.MeshBasicMaterial({color:'cyan'}));
+  car.rotation.x = -Math.PI/2;
+  car.add(new THREE.AxesHelper(15));
+  scene.add (car);
+
+  startPt = 0;
+  car.position.set(pts[startPt]);
+  animate.stepCount = 0;
+  isWalking = true;
+  
+  document.addEventListener('pointerdown', onDocumentMouseDown, false);
+} 
+
+
+function makePoint (pos) {
+  var p = new THREE.Mesh (new THREE.CircleGeometry (5,10), 
+  new THREE.MeshBasicMaterial({color:'cyan'}));
+  p.rotation.x = -Math.PI/2;
+  p.position.copy (pos);
+  return p;
+}
+
+function makeLine (p1, p2) {
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push (p1.clone(), p2.clone());
+  	var line = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+    color: 'yellow'
+  }));
+	return line;	
+}
+
+function onDocumentMouseDown(event) {
+
+  event.preventDefault();
+  var mouse = new THREE.Vector2();
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // find intersections
+  var raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse, camera);  // 從相機 打出 場景座標點
+  var intersects = raycaster.intersectObjects(pickables); // 場景的平面 plane
+  var base = new THREE.Mesh(new THREE.CircleGeometry(5, 10), new THREE.MeshNormalMaterial());
+  document.addEventListener('contextmenu', event => event.preventDefault()); //to disable right-click default action
+  
+  if (intersects.length > 0) {
+	
+	if(event.buttons == 1){// 左鍵
+	
+		pts.push (intersects[0].point.clone() );
+		let point = makePoint (pts[pts.length-1]); 
+		points.push (point);
+		scene.add (point);
+		if (pts.length > 1) {
+			let line = makeLine (pts[pts.length-1], pts[pts.length-2]);
+			lines.push (line);
+			scene.add (line);
+		}
+	} 
+	
+	if (event.button === 2) {  
+		// add line connecting last to first point
+		let line = makeLine(pts[0], pts[pts.length-1]);
+		lines.push (line);
+		scene.add (line);
+		
+		// remove picking plane
+		pickables[0].material.visible = false;
+		pickables = [];
+		return;
+	}
+  }
+}
+
+
+
+function animate() {
+
+      requestAnimationFrame(animate);
+	  renderer.render(scene, camera);
+	  
+	  if(pts.length <= 1)
+		return;
+		
+		console.log(animate.stepCount);
+	  if(!isWalking){
+	    let front = (startPt + pts.length - 1) % pts.length;
+		let next = (startPt + 1) % pts.length;
+			var p12 = pts[startPt].clone().sub(pts[front]);	  // p12 = p2 - p1
+		  let theta1 = Math.atan2 (p12.x, p12.z); //角度
+		  let theta2;
+		  let steps;
+		  var p23 = pts[next].clone().sub(pts[startPt]);   // p23 = p3 - p2
+		  theta2 = Math.atan2 (p23.x, p23.z); //角度
+		  ds = 0.05;
+		  
+		  if (theta2 < 0) { // 異號
+			theta2 += Math.PI * 2;
+		  }
+		  
+		  if (theta1 <  0) { // 異號
+			theta1 += Math.PI * 2;
+		  }
+		  
+		  if(theta1 > theta2){
+			if(theta1 - Math.PI > theta2){
+				steps = Math.floor ((Math.PI * 2 - (theta1-theta2))/ds);
+			}
+			else {
+				steps = Math.floor ((theta1-theta2)/ds);
+				ds = -ds;
+			}
+		  }
+		  else {
+			if(theta2 - Math.PI > theta1){
+				steps = Math.floor ((Math.PI * 2 - (theta2-theta1))/ds);
+				ds = -ds;
+			}
+			else {
+				steps = Math.floor ((theta2-theta1)/ds);
+			}
+		  }
+		  
+		if (animate.stepCount > steps){ // 步數 > 總步數 代表已抵達
+			car.rotation.z = theta2;
+			isWalking = !isWalking; // 繼續走
+			animate.stepCount = 0;
+		}
+			
+		else {
+			car.rotation.z += ds;
+			++animate.stepCount;
+		}
+	  
+	  }
+	  else {
+	  ds = 0.65;
+		   
+		  var p1 = pts[startPt];
+		  var p2 = pts[(startPt+1)%pts.length];  	
+		  var dMove = p2.clone().sub(p1).setLength(ds);
+		  var stepsRequired = Math.floor(p2.distanceTo(p1)/ds);
+
+		  car.position.add (dMove);
+		  ++animate.stepCount;
+		  if (animate.stepCount > stepsRequired) {
+			 animate.stepCount = 0;
+			 car.position.copy (p2);
+			 isWalking = !isWalking;
+			 startPt++;
+			 startPt %=pts.length;
+		  }
+      }
+	  
+}
+
+
+</script> 
+
+</body>

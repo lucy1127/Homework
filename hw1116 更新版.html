@@ -30,13 +30,21 @@ import { MTLLoader } from 'https://unpkg.com/three/examples/jsm/loaders/MTLLoade
 import { OBJLoader } from 'https://unpkg.com/three/examples/jsm/loaders/OBJLoader.js';
 
 
+$('#toggle').click(function(){
+ turn = ! turn;
+ 
+ if(turn)
+	$('#toggle').text ('stop');
+ else
+    $('#toggle').text ('turn');
+});
 
 // my script
 
 var renderer, camera, scene;
-var pickables = [];
+var pickables = [],turn = false;
 var pts, car,ds = 0.85; 
-var lines, points,startPt,isWalking;
+var lines, points,startPt,isWalking = true;
 
 
 
@@ -164,7 +172,8 @@ function animate() {
 		return;
 		
 		console.log(animate.stepCount);
-	  if(!isWalking){
+	if(turn){ //暫停
+	  if(!isWalking){  //旋轉 初始化
 	    let front = (startPt + pts.length - 1) % pts.length;
 		let next = (startPt + 1) % pts.length;
 			var p12 = pts[startPt].clone().sub(pts[front]);	  // p12 = p2 - p1
@@ -202,7 +211,7 @@ function animate() {
 			}
 		  }
 		  
-		if (animate.stepCount > steps){ // 步數 > 總步數 代表已抵達
+		if (animate.stepCount > steps){ // 步數 > 總步數 代表已抵達 stepnum
 			car.rotation.z = theta2;
 			isWalking = !isWalking; // 繼續走
 			animate.stepCount = 0;
@@ -214,6 +223,7 @@ function animate() {
 		}
 	  
 	  }
+	  
 	  else {
 	  ds = 0.65;
 		   
@@ -232,6 +242,7 @@ function animate() {
 			 startPt %=pts.length;
 		  }
       }
+	}
 	  
 }
 

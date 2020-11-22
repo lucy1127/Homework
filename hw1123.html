@@ -83,7 +83,7 @@ function init() {
 } 
 function loadCubemap() {
 
-  var path = "https://i.imgur.com/mwDMMYz.jpg";
+  var path = "https://i.imgur.com/mwDMMYz.jpg"; //路徑
   var format = '.jpg';
   var urls = [
     path + 'px' + format, path + 'nx' + format,
@@ -106,12 +106,7 @@ function  makecola(){
 	texture = loader.load('https://i.imgur.com/4YQ9KZZ.png');
 	//bodycan
 	var points = [];
-		points.push (new THREE.Vector2 (5,0), new THREE.Vector2(6, 2), new THREE.Vector2(6, 20), new THREE.Vector2(5, 20));
-	//下
-	var geometry = new THREE.LatheGeometry(points);
-        material = new THREE.MeshBasicMaterial( {color: 0xC0C0C0});
-	var lathe = new THREE.Mesh( geometry, material );
-		lathe.position.set(5,0,5);
+		points.push (new THREE.Vector2 (5,0), new THREE.Vector2(6, 2),new THREE.Vector2(6, 6),new THREE.Vector2(6, 10), new THREE.Vector2(6, 15), new THREE.Vector2(5, 20));
 	//上
 	var geometry2 = new THREE.LatheGeometry(points);
         material = new THREE.MeshBasicMaterial( {map: texture } );
@@ -119,10 +114,9 @@ function  makecola(){
 	lathe2.rotation.z = Math.PI;
 	lathe2.position.set(5,20,5);
 	
-	cola.add(lathe2);
+	
 	
 	//caps
-	
 	texture = loader.load('https://i.imgur.com/EVg17Xg.png');
 	var geometry = new THREE.CircleGeometry(5, 32 );
 	    material = new THREE.MeshBasicMaterial( {map: texture} );
@@ -133,14 +127,14 @@ function  makecola(){
 	texture = loader.load('https://i.imgur.com/hPVtSqz.png');
 	    material = new THREE.MeshBasicMaterial( {map: texture} );
 	var circle2 = new THREE.Mesh( geometry2, material );
-	circle2.rotation.x = Math.PI/2;
-	circle2.rotation.y = Math.PI;
+	circle2.rotation.x = -Math.PI/2;
+
 	circle.position.set(5,0,5);
 	circle2.position.set(5,20,5);
 
-	var frame = new THREE.Object3D();
-	frame.add(cola,circle,circle2);
-	scene.add(frame);
+	
+	cola.add(lathe2,circle,circle2);
+    scene.add(cola);
 }
 
 function onWindowResize() {

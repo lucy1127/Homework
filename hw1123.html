@@ -17,7 +17,7 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
+
 
 <script type ="module">
 javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
@@ -26,7 +26,9 @@ import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
 
 var renderer, camera, scene; 
-var texture;
+var texture,leaves;
+var angle = 0;
+
 
 
 init(); 
@@ -52,30 +54,22 @@ function init() {
  floor.rotation.x = -Math.PI/2;
  scene.add (floor);
  
- /*var light = new THREE.SpotLight(0xffffff); //打光
- var spotLightHelper = new THREE.SpotLightHelper(light);
- light.position.set (-20,100,0);
- scene.add(light,spotLightHelper);
- 
- var light2 = new THREE.AmbientLight(0x404040);
- scene.add(light2);*/
  ///////////////////////////////////////////////////////////////
-    cola();
+    makecola();
     let loader = new THREE.TextureLoader();
 	loader.crossOrigin = '';
 	 //p.17
-	 
-	 texture = loader.load('https://i.imgur.com/PDucuB5.png');
-	 
-	 var texMat = new THREE.MeshBasicMaterial({
-		map: texture,
-		//transparent: true
-		alphaTest: 0.5,
-		side:THREE.DoubleSide
-	  });
-	  var steve = new THREE.Mesh(new THREE.PlaneGeometry(20,40), texMat);
-	  steve.position.set(20,20,0)
-	  scene.add(steve);
+	texture = loader.load('https://i.imgur.com/G9avLl0.png');
+	 let tex = new THREE.MeshBasicMaterial({
+			map: texture,
+			//transparent: true
+			alphaTest: 0.5,
+			side:THREE.DoubleSide
+		  });
+	  leaves = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), tex);
+	  leaves.position.set(15, 30, -30);
+	  scene.add(leaves);
+	
 	  //p.29
 	  var cubeMap = loadCubemap();
 	  scene.background = cubeMap;
@@ -104,30 +98,29 @@ function loadCubemap() {
   
 }
 
-function  cola(){
-	//body
-    let loader = new THREE.TextureLoader();
-	loader.crossOrigin = '';
-	texture = loader.load('https://i.imgur.com/4YQ9KZZ.png');
+function  makecola(){
 	
 	let material;
-	
-	var geometry = new THREE.CylinderBufferGeometry( 5,5,20,32,1,open);
-        material = new THREE.MeshBasicMaterial( {map: texture} );
-    var body = new THREE.Mesh( geometry, material );
-    body.position.set(5,10,5);
-	//can
+	let cola = new THREE.Group();
+    let loader = new THREE.TextureLoader();
+	texture = loader.load('https://i.imgur.com/4YQ9KZZ.png');
+	//bodycan
 	var points = [];
-	for ( let i = 0; i < 10; i ++ ) {
-		points.push( new THREE.Vector2( Math.sin( i * 0.15 ) * 0.3 + 5, ( i - 5 ) * 0.2 ) );
-	}
-	var geometry = new THREE.LatheGeometry(points,15,0,6.3);
-        material = new THREE.MeshBasicMaterial( { color: 0xC0C0C0 } );
+		points.push (new THREE.Vector2 (5,0), new THREE.Vector2(6, 2), new THREE.Vector2(6, 20), new THREE.Vector2(5, 20));
+	//下
+	var geometry = new THREE.LatheGeometry(points);
+        material = new THREE.MeshBasicMaterial( {color: 0xC0C0C0});
 	var lathe = new THREE.Mesh( geometry, material );
-	var lathe2 = lathe.clone();
+		lathe.position.set(5,0,5);
+	//上
+	var geometry2 = new THREE.LatheGeometry(points);
+        material = new THREE.MeshBasicMaterial( {map: texture } );
+	var lathe2 = new THREE.Mesh( geometry2, material );
 	lathe2.rotation.z = Math.PI;
-	lathe.position.set(5,0.55,5);
-	lathe2.position.set(5,19.6,5);
+	lathe2.position.set(5,20,5);
+	
+	cola.add(lathe2);
+	
 	//caps
 	
 	texture = loader.load('https://i.imgur.com/EVg17Xg.png');
@@ -143,10 +136,10 @@ function  cola(){
 	circle2.rotation.x = Math.PI/2;
 	circle2.rotation.y = Math.PI;
 	circle.position.set(5,0,5);
-	circle2.position.set(5,20.5,5);
+	circle2.position.set(5,20,5);
 
 	var frame = new THREE.Object3D();
-	frame.add(body,lathe,lathe2,circle,circle2);
+	frame.add(cola,circle,circle2);
 	scene.add(frame);
 }
 
@@ -158,6 +151,9 @@ function onWindowResize() {
 
 
 function animate() {
+
+	leaves.rotation.y = angle
+	angle += 0.01;
 
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 

@@ -1,0 +1,93 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<style>
+	#heading{
+	 position:absolute;
+	 text-align:center;
+	 width:100vw;
+	}
+</style> 
+</head>
+<body>  
+
+
+<div id='heading'>
+ <h1 style ='color:red'>Billboard Forest</h1>
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+
+<script type ="module">
+javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+
+import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
+
+var renderer, camera, scene,controls;
+var texture,trees;
+
+
+init(); 
+animate(); 
+
+function init() { 
+
+ renderer = new THREE.WebGLRenderer ({antialias: true}); 
+ renderer.setSize (window.innerWidth,window.innerHeight); 
+ renderer.setClearColor (0x888888); 
+ document.body.appendChild (renderer.domElement); 
+ 
+ camera = new THREE.PerspectiveCamera (50, window.innerWidth/window.innerHeight, 1, 2000);
+ camera.position.z = 200;
+ camera.position.y = 50;
+
+ var controls = new OrbitControls (camera, renderer.domElement);
+ controls.autoRotate = true;
+ scene = new THREE.Scene(); 
+ var grid = new THREE.GridHelper (300, 30, 'red', 'white');
+ scene. add (grid);
+
+ 
+ ///////////////////////////////////////////////////////////////
+ let loader = new THREE.TextureLoader();
+  loader.crossOrigin = '';
+  texture = loader.load('https://i.imgur.com/eSBjKhv.png');
+
+  var texMat = new THREE.MeshBasicMaterial({
+    map: texture,
+    //transparent: true
+    alphaTest: 0.5,
+	side:THREE.DoubleSide
+  });
+
+	var tree = new THREE.Mesh(new THREE.PlaneGeometry(40, 80), texMat);
+	trees = []
+	for (let i = 0; i < 15; i++) {
+  	let tt = tree.clone();
+		tt.position.set ((-1+Math.random()*2)*100, 40, (-1+Math.random()*2)*100);
+		trees.push (tt);
+    scene.add (tt);
+  }
+   
+} 
+
+
+
+function animate() {
+
+	//controls.update();
+	//var planeNormal = new THREE.Vector3(0,0,0);
+    // camera = new THREE.Vector3.ProjectOnPlane(camera, 0);
+	trees.forEach (function(t) {t.lookAt (camera.position)});
+
+
+	renderer.render (scene, camera); 
+	requestAnimationFrame( animate ); 
+}
+
+
+</script> 
+
+</body>

@@ -26,8 +26,8 @@ import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
 
 var renderer, camera, scene;
-var count = 0,move = 0;
-var mesh;
+var count = 0;
+var mesh, mesh2, mesh3, mesh4;
 
 
 init(); 
@@ -51,23 +51,40 @@ function init() {
  var loader = new THREE.TextureLoader();
   loader.load('https://i.imgur.com/GZcxjPv.png', //cat
     function(texture) {
-      var texMat = new THREE.MeshBasicMaterial({ map: texture,transparent: true});
+      var texMat = new THREE.MeshBasicMaterial({ map: texture, side:THREE.DoubleSide, transparent: true});
       mesh = new THREE.Mesh(buildGeometry(), texMat);
-      scene.add(mesh);
+      mesh.position.y = -50;
+      mesh2 = mesh.clone();
+
+      mesh3 = mesh.clone();
+      mesh3.rotation.y = -Math.PI;
+      mesh3.position.y = 100;
+      mesh3.scale.set(0.5,0.5,0.5);
+
+      mesh4 = mesh3.clone();
+      
+      scene.add(mesh, mesh2, mesh3, mesh4);
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
     }
   );
   
-  let texture2 = loader.load('https://i.imgur.com/I9U0QcL.png'); //frame
+  let texture2 = loader.load('https://i.imgur.com/OJBEJuR.png'); //frame
   var texMat2 = new THREE.MeshBasicMaterial({
     map: texture2,
     alphaTest: 0.5,
 	side:THREE.DoubleSide
   });
   var frame = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), texMat2);
+  var frame2 = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshBasicMaterial({color: 0xffffff}));
+  var frame3 = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshBasicMaterial({color: 0xffffff}));
+  frame2.position.x = 450;
+  frame3.position.x = -450;
+
   frame.position.z = 1;
-  scene.add(frame);
+  frame2.position.z = 0.5;
+  frame3.position.z = 0.5;
+  scene.add(frame,frame2,frame3);
   
   
   window.addEventListener('resize', onWindowResize, false);
@@ -112,22 +129,33 @@ function textureAnimate() {
     var texture = mesh.material.map;
     texture.offset.x += 0.25;
     if (texture.offset.x === Math.floor(texture.offset.x))
-      texture.offset.y += 0.5;
+     texture.offset.y += 0.5;
   }
 }
 
 function animate() {
-
+	
 	  count++;
 	  if (count % 3 === 0) {  // a crude way to set animation frequency
 		textureAnimate();
 	  }
+
+    if(mesh !== undefined){
+      mesh.position.x += 2.5;
+
+      mesh3.position.x -= 1.5;
+
+      mesh2.position.x = mesh.position.x - 350;
+      mesh4.position.x = mesh3.position.x + 350;
+      
+
+      if(mesh2.position.x > 0)
+        mesh.position.x = 0;
+      if(mesh4.position.x < 0)
+        mesh3.position.x = 0;
+    }
+	    
 	  
-	  if(mesh !== undefined){
-		  
-		  move += 0.5;
-		  mesh.position.x = move;
-	  }
 
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 

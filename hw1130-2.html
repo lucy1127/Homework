@@ -51,7 +51,7 @@ function init() {
  var loader = new THREE.TextureLoader();
   loader.load('https://i.imgur.com/GZcxjPv.png', //cat
     function(texture) {
-      var texMat = new THREE.MeshBasicMaterial({ map: texture});
+      var texMat = new THREE.MeshBasicMaterial({ map: texture,transparent: true});
       mesh = new THREE.Mesh(buildGeometry(), texMat);
       scene.add(mesh);
       texture.wrapS = THREE.RepeatWrapping;
@@ -59,13 +59,14 @@ function init() {
     }
   );
   
-  let texture2 = loader.load('https://i.imgur.com/OJBEJuR.png'); //frame
+  let texture2 = loader.load('https://i.imgur.com/I9U0QcL.png'); //frame
   var texMat2 = new THREE.MeshBasicMaterial({
     map: texture2,
     alphaTest: 0.5,
 	side:THREE.DoubleSide
   });
   var frame = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), texMat2);
+  frame.position.z = 1;
   scene.add(frame);
   
   
@@ -118,13 +119,15 @@ function textureAnimate() {
 function animate() {
 
 	  count++;
-	  if (count % 18 === 0) {  // a crude way to set animation frequency
+	  if (count % 3 === 0) {  // a crude way to set animation frequency
 		textureAnimate();
 	  }
 	  
-	  /*move += 0.5;
-	  mesh.position.x = move;*/
-	  
+	  if(mesh !== undefined){
+		  
+		  move += 0.5;
+		  mesh.position.x = move;
+	  }
 
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 

@@ -77,10 +77,7 @@ function init() {
 
 function animate() {
 
-	//controls.update();
-	//var planeNormal = new THREE.Vector3(0,0,0);
-    // camera = new THREE.Vector3.ProjectOnPlane(camera, 0);
-	trees.forEach (function(t) {t.lookAt (camera.position)});
+	trees.forEach (function(t) {t.lookAt (camera.position.clone().projectOnPlane(new THREE.Vector3(0,1,0)).add(new THREE.Vector3(0,40,0)))});
 
 
 	renderer.render (scene, camera); 

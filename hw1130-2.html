@@ -93,10 +93,10 @@ function init() {
 function buildGeometry() {
   var geometry = new THREE.Geometry();
   geometry.vertices.push(
-    new THREE.Vector3(-90, -90, 0),
-    new THREE.Vector3(90, -90, 0),
-    new THREE.Vector3(90, 90, 0),
-    new THREE.Vector3(-90, 90, 0)
+    new THREE.Vector3(-80, -80, 0),
+    new THREE.Vector3(80, -80, 0),
+    new THREE.Vector3(80, 80, 0),
+    new THREE.Vector3(-80, 80, 0)
   );
 
   var face;
@@ -127,10 +127,11 @@ function onWindowResize() {
 function textureAnimate() {
   if (mesh) {
     var texture = mesh.material.map;
-    texture.offset.x += 0.25;
+		texture.offset.x += 0.25;
     if (texture.offset.x === Math.floor(texture.offset.x))
-     texture.offset.y += 0.5;
+		texture.offset.y += 0.5;
   }
+
 }
 
 function animate() {
@@ -155,8 +156,7 @@ function animate() {
         mesh3.position.x = 0;
     }
 	    
-	  
-
+	 
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 
 }

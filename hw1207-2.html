@@ -26,8 +26,7 @@ import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
 
 var scene, renderer, camera;
-var meshMaterial;
-var faces,which;
+var faces,which,number;
 
 
 init(); 
@@ -56,6 +55,22 @@ function init() {
     scene.add(gridXZ);
  
 	///////////////////////////////////////////////////////////////////////////////
+	
+	var loader = new THREE.TextureLoader();
+	loader.crossOrigin = '';
+	let texture = loader.load('https://i.imgur.com/ZOydMXd.png');
+	let texMat = new THREE.MeshBasicMaterial({
+		map: texture,
+		alphaTest: 0.5,
+		side:THREE.DoubleSide,
+		polygonOffset: true,
+		polygonOffsetFactor: -1.0,
+		polygonOffsetUnits: -4.0
+	});
+	number = new THREE.Mesh(buildGeometry(), texMat);
+	texture.wrapS = THREE.RepeatWrapping;
+	texture.wrapT = THREE.RepeatWrapping;
+	scene.add(number);
 	
 	var dice = new THREE.Group();
     scene.add (dice);
@@ -93,6 +108,51 @@ function init() {
     pn.position.set (0, -15, 0);
     
     faces = {'px': px, 'py':py, 'pz':pz,'pk':pk,'pm':pm,'pn':pn};
+	setTimeout (countDown, 0);
+}
+
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize(window.innerWidth, window.innerHeight);
+}
+function countDown() {
+
+	setTimeout (countDown, 1000);
+	if (number) {
+		var texture = number.material.map;
+			texture.offset.x -= 1/5;
+		if (texture.offset.x === Math.floor(texture.offset.x))
+			texture.offset.y -= 1;
+	}
+}
+function buildGeometry() {
+
+	var geometry = new THREE.Geometry();
+		geometry.vertices.push(
+		new THREE.Vector3(-15, -15, 0),
+		new THREE.Vector3(15, -15, 0),
+		new THREE.Vector3(15, 15, 0),
+		new THREE.Vector3(-15, 15, 0)
+	);
+
+	var face;
+	face = new THREE.Face3(0, 1, 2);
+	geometry.faces.push(face);
+	face = new THREE.Face3(0, 2, 3);
+	geometry.faces.push(face);
+
+	var st0 = new THREE.Vector2(0.8,0);
+	var st1 = new THREE.Vector2(1, 0);
+	var st2 = new THREE.Vector2(1, 1);
+	var st3 = new THREE.Vector2(0.8, 1);
+	geometry.faceVertexUvs[0].push([st0, st1, st2]);
+	geometry.faceVertexUvs[0].push([st0, st2, st3]);
+
+	geometry.computeBoundingSphere();
+	geometry.computeFaceNormals();
+	geometry.computeVertexNormals();
+	return geometry;
 }
 
 function searchFace () {
@@ -148,9 +208,21 @@ function animate() {
 
 	setAllFacesTransparent();
   
-    // go through all faces, determine which one facing camera
-	let which = searchFace();
+
+	which = searchFace();
     faces[which].material.transparent = false;
+	
+	if(number){
+		number.position.copy(faces[which].position);
+		number.rotation.copy(faces[which].rotation);
+		if(which === 'pm') //white
+			number.rotation.y = -Math.PI/2;
+		else if(number === 'pn'){ //pink
+			number.rotation.x = Math.PI/2;
+		}
+		else if(which === 'pk') //yellow
+			number.rotation.z = Math.PI/2;
+	}
 
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 

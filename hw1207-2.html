@@ -91,23 +91,23 @@ function init() {
     dice.add (pz);
     pz.position.set (0, 0, 15);
 	
-	let pk = new THREE.Mesh (new THREE.PlaneGeometry (30,30), new THREE.MeshBasicMaterial({color:0xffff00, transparent:true, opacity:0.4}));
-    dice.add (pk);
-	pk.rotation.y = Math.PI;
-	pk.rotation.z = Math.PI/2;
-    pk.position.set (0, 0, -15);
+	let nx = new THREE.Mesh (new THREE.PlaneGeometry (30,30), new THREE.MeshBasicMaterial({color:0xffff00, transparent:true, opacity:0.4}));
+    dice.add (nx);
+	nx.rotation.y = Math.PI;
+	nx.rotation.z = Math.PI/2;
+    nx.position.set (0, 0, -15);
 	
-	let pm = new THREE.Mesh (new THREE.PlaneGeometry (30,30), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.4}));
-    dice.add (pm);
-	pm.rotation.y = -Math.PI/2;
-    pm.position.set (-15, 0, 0);
+	let ny = new THREE.Mesh (new THREE.PlaneGeometry (30,30), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.4}));
+    dice.add (ny);
+	ny.rotation.y = -Math.PI/2;
+    ny.position.set (-15, 0, 0);
 	
-	let pn = new THREE.Mesh (new THREE.PlaneGeometry (30,30), new THREE.MeshBasicMaterial({color:0xffC0CB, transparent:true, opacity:0.4}));
-    dice.add (pn);
-	pn.rotation.x = Math.PI/2;
-    pn.position.set (0, -15, 0);
+	let nz = new THREE.Mesh (new THREE.PlaneGeometry (30,30), new THREE.MeshBasicMaterial({color:0xffC0CB, transparent:true, opacity:0.4}));
+    dice.add (nz);
+	nz.rotation.x = Math.PI/2;
+    nz.position.set (0, -15, 0);
     
-    faces = {'px': px, 'py':py, 'pz':pz,'pk':pk,'pm':pm,'pn':pn};
+    faces = {'px': px, 'py':py, 'pz':pz,'nx':nx,'ny':ny,'nz':nz};
 	setTimeout (countDown, 0);
 }
 
@@ -158,8 +158,8 @@ function buildGeometry() {
 function searchFace () {
 	var maxDot = -1;
   
-	var normals = {px: new THREE.Vector3(1,0,0), py: new THREE.Vector3(0,1,0), pz: new THREE.Vector3(0,0,1),pk: new THREE.Vector3(0,0,-1),pm: new THREE.Vector3(-1,0,0),pn: new THREE.Vector3(0,-1,0)};
-	var centers = {px: new THREE.Vector3(15,0,0), py: new THREE.Vector3(0,15,0), pz: new THREE.Vector3(0,0,15),pk: new THREE.Vector3(0,0,-15),pm: new THREE.Vector3(-15,0,0),pn: new THREE.Vector3(0,-15,0)};
+	var normals = {px: new THREE.Vector3(1,0,0), py: new THREE.Vector3(0,1,0), pz: new THREE.Vector3(0,0,1),nx: new THREE.Vector3(0,0,-1),ny: new THREE.Vector3(-1,0,0),nz: new THREE.Vector3(0,-1,0)};
+	var centers = {px: new THREE.Vector3(15,0,0), py: new THREE.Vector3(0,15,0), pz: new THREE.Vector3(0,0,15),nx: new THREE.Vector3(0,0,-15),ny: new THREE.Vector3(-15,0,0),nz: new THREE.Vector3(0,-15,0)};
   
 	let dd, point;
 	point = camera.position.clone().sub (centers['px']).normalize();
@@ -177,20 +177,20 @@ function searchFace () {
 		maxDot = dd;
 		which = 'pz';
 	}
-	point = camera.position.clone().sub (centers['pk']).normalize();
-	if ((dd = normals['pk'].dot (point)) > maxDot) {
+	point = camera.position.clone().sub (centers['nx']).normalize();
+	if ((dd = normals['nx'].dot (point)) > maxDot) {
 		maxDot = dd;
-		which = 'pk';
+		which = 'nx';
 	}
-	point = camera.position.clone().sub (centers['pm']).normalize();
-	if ((dd = normals['pm'].dot (point)) > maxDot) {
+	point = camera.position.clone().sub (centers['ny']).normalize();
+	if ((dd = normals['ny'].dot (point)) > maxDot) {
 		maxDot = dd;
-		which = 'pm';
+		which = 'ny';
 	}
-	point = camera.position.clone().sub (centers['pn']).normalize();
-	if ((dd = normals['pn'].dot (point)) > maxDot) {
+	point = camera.position.clone().sub (centers['nz']).normalize();
+	if ((dd = normals['nz'].dot (point)) > maxDot) {
 		maxDot = dd;
-		which = 'pn';
+		which = 'nz';
 	}
 		return which;
 }
@@ -199,9 +199,9 @@ function setAllFacesTransparent () {
 	faces['px'].material.transparent = true;
 	faces['py'].material.transparent = true;
 	faces['pz'].material.transparent = true;
-	faces['pk'].material.transparent = true;
-	faces['pm'].material.transparent = true;
-	faces['pn'].material.transparent = true;
+	faces['nx'].material.transparent = true;
+	faces['ny'].material.transparent = true;
+	faces['nz'].material.transparent = true;
 }
 
 function animate() {
@@ -215,12 +215,12 @@ function animate() {
 	if(number){
 		number.position.copy(faces[which].position);
 		number.rotation.copy(faces[which].rotation);
-		if(which === 'pm') //white
+		if(which === 'ny') //white
 			number.rotation.y = -Math.PI/2;
-		else if(number === 'pn'){ //pink
+		else if(number === 'nz'){ //pink
 			number.rotation.x = Math.PI/2;
 		}
-		else if(which === 'pk') //yellow
+		else if(which === 'nx') //yellow
 			number.rotation.z = Math.PI/2;
 	}
 

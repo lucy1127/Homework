@@ -161,7 +161,9 @@ function blinker() {
 	else
 		plane.material.color.setHSL (oldColor.h, oldColor.s, oldColor.l);  
 		lit = ! lit;
-	console.log(clock.getElapsedTime()- isToggleTime);
+		
+		console.log(clock.getElapsedTime()- isToggleTime);
+		
 	if (clockOn && clock.getElapsedTime()- isToggleTime < 7)
 		setTimeout (blinker, 200);
 }

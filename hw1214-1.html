@@ -17,6 +17,7 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
 
 
 <script type ="module">
@@ -24,12 +25,83 @@ javascript:(function(){var script=document.createElement('script');script.onload
 
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
+import { MTLLoader } from 'https://unpkg.com/three/examples/jsm/loaders/MTLLoader.js';
+import { OBJLoader } from 'https://unpkg.com/three/examples/jsm/loaders/OBJLoader.js';
 
 var scene, renderer, camera;
+var keyboard = new KeyboardState();
+var gun, firePoint, firePoint2;
+var bullets = [], targets = [];
+
 
 
 init(); 
 animate(); 
+
+function readModel (modelName, targetSize=40) {
+    var onProgress = function(xhr) {
+        if (xhr.lengthComputable) {
+            var percentComplete = xhr.loaded / xhr.total * 100;
+            console.log(Math.round(percentComplete, 2) + '% downloaded');
+        }
+    };
+
+    var onError = function(xhr) {};
+    var mtlLoader =  new MTLLoader();
+    mtlLoader.setPath('models/');
+    mtlLoader.load(modelName+'.mtl', function(materials) {
+        materials.preload();
+        var objLoader =  new OBJLoader();
+        objLoader.setMaterials(materials);
+        objLoader.setPath('models/');
+        objLoader.load(modelName+'.obj', function(object) {
+            let t =  unitize (object, targetSize);
+            t.name = 'OBJ'
+
+            gun = new THREE.Object3D();
+            firePoint = new THREE.Object3D();
+            firePoint.position.set(0,1,20);
+            firePoint2 = new THREE.Object3D();
+            firePoint2.position.set(0,1,18);
+
+            camera.position.set(3,3,-15);
+            camera.lookAt(firePoint.position);
+            gun.add(camera);
+            
+            gun.add(t,firePoint,firePoint2);
+            gun.position.y = 8;
+            scene.add (gun);
+
+        }, onProgress, onError);
+
+    });
+}
+
+function unitize (object, targetSize) {  
+    // find bounding box of 'object'
+    var box3 = new THREE.Box3();
+    box3.setFromObject (object);
+    var size = new THREE.Vector3();
+    size.subVectors (box3.max, box3.min);
+    var center = new THREE.Vector3();
+    center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+
+    console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+    console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+
+    // uniform scaling according to objSize
+    var objSize = Math.max (size.x, size.y, size.z);
+    var scaleSet = targetSize/objSize;
+
+    //let controls = new OrbitControls(camera, renderer.domElement);
+                
+    var theObject =  new THREE.Object3D();
+    theObject.add (object);
+    object.scale.set (scaleSet, scaleSet, scaleSet);
+    object.position.set (-center.x*scaleSet, -center.y*scaleSet, -center.z*scaleSet);
+
+    return theObject;
+}
 
 function init() { 
 
@@ -45,26 +117,107 @@ function init() {
 
     scene = new THREE.Scene();
 
+	readModel('Model');
+	
     camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
     camera.position.set (0, 100, 200);
 
-    let controls = new OrbitControls(camera, renderer.domElement);
-
     var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
     scene.add(gridXZ);
+	let light = new THREE.AmbientLight(0xffffff);
+    scene.add(light);
  
 	///////////////////////////////////////////////////////////////////////////////
+	
+	let box = new THREE.Mesh(new THREE.BoxGeometry(2,8,2), new THREE.MeshNormalMaterial());
+    box.position.y = 4;
+    scene.add(box);
+
+    for(let i = 0; i < 5; i++){ //隨機產生目標
+        let target = new THREE.Mesh(new THREE.SphereGeometry(5,32,32), new THREE.MeshNormalMaterial({color: 0xff0000}));
+        let z = Math.random() * 50 + 30;
+        let y = Math.random() * 20;
+        let x = Math.random() * 50 + 30;
+
+        if(Math.random() > 0.5)
+            x *= -1;
+        
+        target.position.set(x,y,z);
+        targets.push(target);
+        scene.add(target);
+    }
 	
 	
 }
 
 
-
 function animate() {
+
+    keyboard.update();
+
+    if(gun !== undefined){
+        changeRotate();
+        shooting();
+    }
+
+    bullets.forEach(function(data){
+        data.bullet.position.add(data.direction.clone().setLength(2));
+    });
+
+    let x = -1, y = -1;
+    for(let i = 0; i < bullets.length; i++){
+        for(let j = 0; j < targets.length; j++){
+            let dis = bullets[i].bullet.position.clone().sub(targets[j].position).length();
+           // console.log(dis);
+            if(dis < 5.5){ //小於5.5就會碰撞
+                x = i; //子彈
+                y = j; //目標
+            }
+        }
+    }
+
+    if(x !== -1 && y !== -1){
+        scene.remove(bullets[x].bullet, targets[y]); //移除目標跟子彈
+
+        bullets.splice(x,1); //splice 從Array中添加/刪除項目，回傳被刪除的項目。
+        targets.splice(y,1);
+    }
 
 
 	renderer.render (scene, camera); 
 	requestAnimationFrame( animate ); 
+}
+
+function changeRotate(){
+    if(keyboard.pressed('up'))
+        gun.rotation.x -= 0.015;
+    if(keyboard.pressed('down'))
+        gun.rotation.x += 0.015;
+    if(keyboard.pressed('left'))
+        gun.rotation.y += 0.015;
+    if(keyboard.pressed('right'))
+        gun.rotation.y -= 0.015;
+}
+
+function shooting(){
+    if(keyboard.down('space')){ //子彈
+        const geometry = new THREE.SphereGeometry( 0.5, 32, 32 );
+        const material = new THREE.MeshBasicMaterial( {color: 0xbfbfbf} );
+        let bullet = new THREE.Mesh( geometry, material );
+        firePoint.getWorldPosition(bullet.position);
+
+        let point = new THREE.Vector3();
+        firePoint2.getWorldPosition(point);
+
+        scene.add(bullet);
+
+        let direction = bullet.position.clone().sub(point).normalize(); //創造方向
+
+        bullets.push({
+            bullet: bullet,
+            direction: direction,
+        });
+    }
 }
 
 

@@ -161,7 +161,7 @@ function animate() {
     }
 
     bullets.forEach(function(data){
-        data.bullet.position.add(data.direction.clone().setLength(2));
+        data.bullet.position.add(data.direction.clone().setLength(10));
     });
 
     let x = -1, y = -1;

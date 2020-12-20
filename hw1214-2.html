@@ -7,10 +7,6 @@
 	 text-align:center;
 	 width:100vw;
 	}
-    body {
-        margin: 0;
-        overflow: hidden;
-    }
 </style> 
 </head>
 <body>  
@@ -31,13 +27,63 @@ import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/Orb
 import { MTLLoader } from 'https://unpkg.com/three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'https://unpkg.com/three/examples/jsm/loaders/OBJLoader.js';
 
-var scene, renderer, camera, keyboard = new KeyboardState();;
+var scene, renderer, camera;
+var keyboard = new KeyboardState();
 var gun, firePoint, firePoint2;
 var bullets = [], targets = [];
+
+var uvOffsetArray = [];
+var baseS = 0,baseT = 0;
+var counter = 0;
+var sprite;
+var sprites = [];
 
 init(); 
 animate(); 
 
+
+function setUpOffsetArray() {
+  var rowCount = 4; 
+  var colCount = 8;
+  for (var i = 0; i < rowCount; i++) {
+    var row = [];
+    for (var j = 0; j < colCount; j++)
+      row.push(new THREE.Vector2(j * 0.125, - 0.25 * i));
+    uvOffsetArray.push(row);
+  }
+}
+
+function buildSprite(texMat) {
+
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push(
+	new THREE.Vector3(-15, -15, 0),
+	new THREE.Vector3(15, -15, 0),
+	new THREE.Vector3(15, 15, 0),
+	new THREE.Vector3(-15, 15, 0)
+	);
+
+	var face;
+	face = new THREE.Face3(0, 1, 2);
+	geometry.faces.push(face);
+	face = new THREE.Face3(0, 2, 3);
+	geometry.faces.push(face);
+
+	// upper left corner
+	var uv0 = new THREE.Vector2(0.0,0.75);
+	var uv1 = new THREE.Vector2(0.125,0.75);
+	var uv2 = new THREE.Vector2(0.125,1.0);
+	var uv3 = new THREE.Vector2(0.0,1.0);
+  
+	geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
+	geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
+
+	geometry.computeBoundingSphere();
+	geometry.computeFaceNormals();
+	geometry.computeVertexNormals();
+
+	sprite = new THREE.Mesh(geometry, texMat);
+}
 
 function readModel (modelName, targetSize=40) {
     var onProgress = function(xhr) {
@@ -65,7 +111,7 @@ function readModel (modelName, targetSize=40) {
             firePoint2 = new THREE.Object3D();
             firePoint2.position.set(0,1,18);
 
-            camera.position.set(3,3,-15);
+            camera.position.set(0,5,-20);
             camera.lookAt(firePoint.position);
             gun.add(camera);
             
@@ -94,7 +140,7 @@ function unitize (object, targetSize) {
     var objSize = Math.max (size.x, size.y, size.z);
     var scaleSet = targetSize/objSize;
 
-    //let controls = new OrbitControls(camera, renderer.domElement);
+    let controls = new OrbitControls(camera, renderer.domElement);
                 
     var theObject =  new THREE.Object3D();
     theObject.add (object);
@@ -122,7 +168,7 @@ function init() {
     readModel('Model');
 
     camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
-    camera.position.set (0, 100, 200);
+    //camera.position.set (0, 100, 200);
 
     var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
     scene.add(gridXZ);
@@ -137,9 +183,11 @@ function init() {
     scene.add(box);
 
     for(let i = 0; i < 5; i++){
-        let target = new THREE.Mesh(new THREE.SphereGeometry(5,32,32), new THREE.MeshNormalMaterial({color: 0xff0000}));
+        let target;
+        target = new THREE.Mesh(new THREE.BoxGeometry(10,10,10), new THREE.MeshNormalMaterial());
+
         let z = Math.random() * 50 + 30;
-        let y = Math.random() * 20;
+        let y = 10;
         let x = Math.random() * 50 + 30;
 
         if(Math.random() > 0.5)
@@ -149,6 +197,30 @@ function init() {
         targets.push(target);
         scene.add(target);
     }
+
+    setUpOffsetArray();
+
+    var loader = new THREE.TextureLoader();
+
+    loader.load(
+        './boom.png',
+        function(texture) {
+            var texMat = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            buildSprite(texMat);
+        },
+        function(xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+        function(xhr) {
+            console.log('An error happened');
+        }
+    );
 }
 
 
@@ -161,23 +233,70 @@ function animate() {
         shooting();
     }
 
-    bullets.forEach(function(data){
-        data.bullet.position.add(data.direction.clone().setLength(2));
+    sprites.forEach(function(sprite){
+        spriteAnimate(sprite);
+        sprite.counter++;
     });
 
     let x = -1, y = -1;
     for(let i = 0; i < bullets.length; i++){
+        let prePosition = bullets[i].bullet.position;
+        let nextPosition = bullets[i].bullet.position.clone().add(bullets[i].direction.clone().setLength(2));
+
         for(let j = 0; j < targets.length; j++){
-            let dis = bullets[i].bullet.position.clone().sub(targets[j].position).length();
-            console.log(dis);
-            if(dis < 5.5){
+            let xMin = -5, xMax = 5;
+            let zMin = -5, zMax = 5;
+
+            let bulletPreLocalPosition = targets[j].worldToLocal(prePosition.clone()).clone(); //目標座標
+            let bulletNextLocalPosition = targets[j].worldToLocal(nextPosition.clone()).clone();
+
+            let c1 = 0, c2 = 0; 
+            
+            if(bulletPreLocalPosition.x < xMin)
+                c1 += 1;
+            if(bulletPreLocalPosition.x > xMax)
+                c1 += 2;
+            if(bulletPreLocalPosition.z < zMin)
+                c1 += 4;
+            if(bulletPreLocalPosition.z > zMax)
+                c1 += 8;
+            
+            if(bulletNextLocalPosition.x < xMin)
+                c2 += 1;
+            if(bulletNextLocalPosition.x > xMax)
+                c2 += 2;
+            if(bulletNextLocalPosition.z < zMin)
+                c2 += 4;
+            if(bulletNextLocalPosition.z > zMax)
+                c2 += 8;
+
+            if(c1 === c2 && c1 === 0){  
                 x = i;
-                y = j;   
+                y = j;
+            }
+            else if(c1 & c2 === 0){ 
+                x = i;
+                y = j;
             }
         }
+
+        bullets[i].bullet.position.copy(nextPosition);
     }
 
     if(x !== -1 && y !== -1){
+	
+        let copySprite = sprite.clone();
+
+        sprites.push({
+            body: copySprite,
+            baseS: 0,
+            baseT: 0,
+            counter: 0
+        });
+
+        copySprite.position.copy(bullets[x].bullet.position);
+        scene.add(copySprite);
+
         scene.remove(bullets[x].bullet, targets[y]);
 
         bullets.splice(x,1);
@@ -189,11 +308,22 @@ function animate() {
 	requestAnimationFrame( animate ); 
 }
 
+function spriteAnimate(sprite) {
+	sprite.body.material.map.offset.copy (uvOffsetArray[sprite.baseS][sprite.baseT]);  
+    sprite.baseT = (sprite.baseT + 1) % 8;
+    if (sprite.baseT === 0) {
+        if(sprite.baseS + 1 === 4)
+            scene.remove(sprite.body);
+
+        sprite.baseS = (sprite.baseS + 1) % 4;
+    }
+}
+
 function changeRotate(){
-    if(keyboard.pressed('up'))
-        gun.rotation.x -= 0.015;
-    if(keyboard.pressed('down'))
-        gun.rotation.x += 0.015;
+    //if(keyboard.pressed('up'))
+    //     gun.rotation.x -= 0.015;
+    // if(keyboard.pressed('down'))
+    //     gun.rotation.x += 0.015;
     if(keyboard.pressed('left'))
         gun.rotation.y += 0.015;
     if(keyboard.pressed('right'))
@@ -201,14 +331,14 @@ function changeRotate(){
 }
 
 function shooting(){
+
     if(keyboard.down('space')){
         const geometry = new THREE.SphereGeometry( 0.5, 32, 32 );
         const material = new THREE.MeshBasicMaterial( {color: 0xbfbfbf} );
         let bullet = new THREE.Mesh( geometry, material );
-        firePoint.getWorldPosition(bullet.position);
-
-        let point = new THREE.Vector3();
-        firePoint2.getWorldPosition(point);
+        
+        bullet.position.copy(firePoint.localToWorld(new THREE.Vector3()));
+        let point = firePoint2.localToWorld(new THREE.Vector3());
 
         scene.add(bullet);
 
